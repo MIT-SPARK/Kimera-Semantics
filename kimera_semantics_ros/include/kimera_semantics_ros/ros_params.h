@@ -29,19 +29,17 @@ inline SemanticMeshIntegrator::SemanticMeshConfig
 getSemanticMeshConfigFromRosParam(const ros::NodeHandle& nh_private) {
   SemanticMeshIntegrator::SemanticMeshConfig semantic_mesh_config;
 
-  double min_probability =
-      semantic_mesh_config.min_probability;
-  nh_private.param("semantic_mesh_min_probability",
-                   min_probability,
-                   min_probability);
+  double min_probability = semantic_mesh_config.min_probability;
+  nh_private.param(
+      "semantic_mesh_min_probability", min_probability, min_probability);
   semantic_mesh_config.min_probability =
       static_cast<SemanticProbability>(min_probability);
 
-  //nh_private.param("semantic_mesh_color_mode",
+  // nh_private.param("semantic_mesh_color_mode",
   //                 semantic_mesh_config.color_mode,
   //                 semantic_mesh_config.color_mode);
 
   return semantic_mesh_config;
 }
 
-}
+}  // namespace kimera
