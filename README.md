@@ -33,7 +33,10 @@ git clone git@github.edu:MIT-SPARK/Kimera-Semantics.git
 
 # Install dependencies from rosinstall file using wstool
 wstool init
-wstool merge Kimera-Semantics/install/kimera_semantics.rosinstall
+# For ssh:
+wstool merge Kimera-Semantics/kimera/install/kimera_semantics_ssh.rosinstall
+# For https:
+#wstool merge Kimera-Semantics/kimera/install/kimera_semantics_https.rosinstall
 wstool update
 ```
 
