@@ -1,15 +1,19 @@
 #pragma once
 
-#include <voxblox/core/layer.h>
-#include <voxblox/core/voxel.h>
+#include <limits>
+#include <list>
+#include <memory>
+
 #include <voxblox/core/block.h>
 #include <voxblox/core/color.h>
+#include <voxblox/core/layer.h>
+#include <voxblox/core/voxel.h>
 #include <voxblox/mesh/marching_cubes.h>
-#include <voxblox/mesh/mesh_layer.h>
 #include <voxblox/mesh/mesh_integrator.h>
+#include <voxblox/mesh/mesh_layer.h>
 
-#include "kimera_semantics/common.h"
 #include "kimera_semantics/color.h"
+#include "kimera_semantics/common.h"
 #include "kimera_semantics/semantic_voxel.h"
 
 namespace kimera {
@@ -72,10 +76,11 @@ class SemanticMeshIntegrator : public vxb::MeshIntegrator<vxb::TsdfVoxel> {
     vxb::BlockIndexList all_tsdf_blocks;
     if (only_mesh_updated_blocks) {
       vxb::BlockIndexList all_label_blocks;
-      sdf_layer_const_->getAllUpdatedBlocks(vxb::Update::kMesh, &all_tsdf_blocks);
+      sdf_layer_const_->getAllUpdatedBlocks(vxb::Update::kMesh,
+                                            &all_tsdf_blocks);
       // TODO(Toni): not sure if we have to make our own update bit.
-      semantic_layer_mutable_ptr_->getAllUpdatedBlocks(
-            vxb::Update::kMesh, &all_label_blocks);
+      semantic_layer_mutable_ptr_->getAllUpdatedBlocks(vxb::Update::kMesh,
+                                                       &all_label_blocks);
       if (all_tsdf_blocks.size() == 0u && all_label_blocks.size() == 0u) {
         return false;
       }

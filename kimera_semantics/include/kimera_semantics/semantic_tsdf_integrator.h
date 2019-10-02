@@ -1,7 +1,11 @@
 #pragma once
 
 #include <functional>  // For placeholders for Semantics
-#include <numeric>     // For accumulate for Semantics
+#include <list>
+#include <memory>
+#include <numeric>  // For accumulate for Semantics
+#include <string>
+#include <utility>
 
 #include <Eigen/Core>
 
@@ -238,16 +242,15 @@ class SemanticTsdfIntegrator : public vxb::MergedTsdfIntegrator {
   }
 
   // NEEDS TO BE THREAD-SAFE
-  void integrateVoxels(
-      const vxb::Transformation& T_G_C,
-      const vxb::Pointcloud& points_C,
-      const HashableColors& colors,
-      const SemanticLabels& semantic_labels,
-      const bool enable_anti_grazing,
-      const bool clearing_ray,
-      const VoxelMap& voxel_map,
-      const VoxelMap& clear_map,
-      const size_t thread_idx) {
+  void integrateVoxels(const vxb::Transformation& T_G_C,
+                       const vxb::Pointcloud& points_C,
+                       const HashableColors& colors,
+                       const SemanticLabels& semantic_labels,
+                       const bool enable_anti_grazing,
+                       const bool clearing_ray,
+                       const VoxelMap& voxel_map,
+                       const VoxelMap& clear_map,
+                       const size_t thread_idx) {
     VoxelMap::const_iterator it;
     size_t map_size;
     if (clearing_ray) {
@@ -328,12 +331,12 @@ class SemanticTsdfIntegrator : public vxb::MergedTsdfIntegrator {
 
     const vxb::Point merged_point_G = T_G_C * merged_point_C;
     vxb::RayCaster ray_caster(origin,
-                         merged_point_G,
-                         clearing_ray,
-                         config_.voxel_carving_enabled,
-                         config_.max_ray_length_m,
-                         voxel_size_inv_,
-                         config_.default_truncation_distance);
+                              merged_point_G,
+                              clearing_ray,
+                              config_.voxel_carving_enabled,
+                              config_.max_ray_length_m,
+                              voxel_size_inv_,
+                              config_.default_truncation_distance);
 
     vxb::GlobalIndex global_voxel_idx;
     // TODO(Toni): also put semantic_block

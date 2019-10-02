@@ -1,19 +1,19 @@
 #pragma once
 
-#include <string>
 #include <iostream>
 #include <sstream>
+#include <string>
 #include <vector>
 
 namespace kimera {
 
 /* Usage:
-* std::ifstream file("plop.csv");
-*  for(CSVIterator loop(file); loop != CSVIterator(); ++loop)
-*  {
-*      std::cout << "4th Element(" << (*loop)[3] << ")\n";
-*  }
-*/
+ * std::ifstream file("plop.csv");
+ *  for(CSVIterator loop(file); loop != CSVIterator(); ++loop)
+ *  {
+ *      std::cout << "4th Element(" << (*loop)[3] << ")\n";
+ *  }
+ */
 class CSVIterator {
  private:
   class CSVRow {
