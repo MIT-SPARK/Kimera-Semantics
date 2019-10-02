@@ -5,10 +5,14 @@ find_package(catkin_simple REQUIRED)
 
 catkin_simple()
 
-cs_add_executable(${PROJECT_NAME}
+cs_add_library(${PROJECT_NAME}
+  semantic_tsdf_server.cpp
+)
+
+cs_add_executable(kimera_semantics_node
   src/kimera_semantics_node.cpp
 )
-#target_link_libraries(${PROJECT_NAME} SparkVio)
+target_link_libraries(kimera_semantics_node ${PROJECT_NAME})
 
 cs_install()
 
