@@ -22,6 +22,5 @@ typedef Eigen::Matrix<SemanticProbability, kTotalNumberOfLabels, 1>
 typedef Eigen::
     Matrix<SemanticProbability, kTotalNumberOfLabels, kTotalNumberOfLabels>
         SemanticLikelihoodFunction;
-typedef std::unordered_map<SemanticLabel, vxb::Color> SemanticLabelToColorMap;
 
 }  // namespace kimera

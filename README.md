@@ -23,6 +23,9 @@ Install ROS by following [our reference](./docs/ros_installation.md), or the off
 mkdir -p ~/catkin_ws/src
 cd ~/catkin_ws/
 catkin init
+catkin config --extend /opt/ros/melodic # Change to your distro
+catkin config --cmake-args -DCMAKE_BUILD_TYPE=Release
+catkin config --merge-devel
 
 # Add workspace to bashrc.
 echo 'source ~/catkin_ws/devel/setup.bash' >> ~/.bashrc

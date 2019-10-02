@@ -1,6 +1,7 @@
 #pragma once
 
-#include <kimera_semantics/common.h>
+#include "kimera_semantics/common.h"
+#include "kimera_semantics/color.h"
 
 namespace kimera {
 
@@ -16,7 +17,7 @@ struct SemanticVoxel {
       SemanticProbabilities::Constant(-0.60205999132);
   // Initialize voxel with gray color
   // Make sure that all color maps agree on semantic label 0u -> gray
-  vxb::Color color = vxb::Color::Gray();
+  HashableColor color = HashableColor::Gray();
 };
 
 }

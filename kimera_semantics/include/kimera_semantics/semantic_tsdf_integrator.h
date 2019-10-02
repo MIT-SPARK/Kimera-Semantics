@@ -104,7 +104,7 @@ class SemanticTsdfIntegrator : public vxb::MergedTsdfIntegrator {
   // Otw, use integratePointCloud directly with semantic labels.
   void integratePointCloud(const vxb::Transformation& T_G_C,
                            const vxb::Pointcloud& points_C,
-                           const vxb::Colors& colors,
+                           const HashableColors& colors,
                            const bool freespace_points = false) {
     SemanticLabels semantic_labels(colors.size());
     // TODO(Toni): parallelize with openmp
@@ -118,8 +118,8 @@ class SemanticTsdfIntegrator : public vxb::MergedTsdfIntegrator {
       //            <<  std::to_string(colors[i].b);
       // TODO(Toni): Pointcloud recolor sets `a` field to 0. Making the
       // map lookup fail.
-      const vxb::Color& color = colors[i];
-      vxb::Color color_a = vxb::Color(color.r, color.g, color.b, 255u);
+      const HashableColor& color = colors[i];
+      HashableColor color_a = HashableColor(color.r, color.g, color.b, 255u);
       // const auto& it =
       // semantic_config_.color_to_semantic_label_map_.find(color_a); if (it !=
       // semantic_config_.color_to_semantic_label_map_.end()) {
@@ -144,7 +144,7 @@ class SemanticTsdfIntegrator : public vxb::MergedTsdfIntegrator {
 
   void integratePointCloud(const vxb::Transformation& T_G_C,
                            const vxb::Pointcloud& points_C,
-                           const vxb::Colors& colors,
+                           const HashableColors& colors,
                            const SemanticLabels& semantic_labels,
                            const bool freespace_points = false) {
     CHECK_GE(points_C.size(), 0u);
@@ -191,7 +191,7 @@ class SemanticTsdfIntegrator : public vxb::MergedTsdfIntegrator {
  protected:
   void integrateRays(const vxb::Transformation& T_G_C,
                      const vxb::Pointcloud& points_C,
-                     const vxb::Colors& colors,
+                     const HashableColors& colors,
                      const SemanticLabels& semantic_labels,
                      const bool enable_anti_grazing,
                      const bool clearing_ray,
@@ -241,7 +241,7 @@ class SemanticTsdfIntegrator : public vxb::MergedTsdfIntegrator {
   void integrateVoxels(
       const vxb::Transformation& T_G_C,
       const vxb::Pointcloud& points_C,
-      const vxb::Colors& colors,
+      const HashableColors& colors,
       const SemanticLabels& semantic_labels,
       const bool enable_anti_grazing,
       const bool clearing_ray,
@@ -275,7 +275,7 @@ class SemanticTsdfIntegrator : public vxb::MergedTsdfIntegrator {
   // HAS TO BE THREADSAFE!!!
   void integrateVoxel(const vxb::Transformation& T_G_C,
                       const vxb::Pointcloud& points_C,
-                      const vxb::Colors& colors,
+                      const HashableColors& colors,
                       const SemanticLabels& semantic_labels,
                       const bool enable_anti_grazing,
                       const bool clearing_ray,
@@ -286,8 +286,8 @@ class SemanticTsdfIntegrator : public vxb::MergedTsdfIntegrator {
     }
 
     const vxb::Point& origin = T_G_C.getPosition();
-    vxb::Color merged_color;
-    vxb::Point merged_point_C = Point::Zero();
+    HashableColor merged_color;
+    vxb::Point merged_point_C = vxb::Point::Zero();
     vxb::FloatingPoint merged_weight = 0.0f;
     // Calculate semantic labels frequencies to encode likelihood function.
     // Prefill with 0 frequency.
@@ -302,7 +302,7 @@ class SemanticTsdfIntegrator : public vxb::MergedTsdfIntegrator {
     // - semantic_label_frequencies: number of observed labels in the voxel.
     for (const size_t& pt_idx : global_voxel_idx_to_point_indices.second) {
       const vxb::Point& point_C = points_C[pt_idx];
-      const vxb::Color& color = colors[pt_idx];
+      const HashableColor& color = colors[pt_idx];
 
       const vxb::FloatingPoint& point_weight = getVoxelWeight(point_C);
       // TODO(Toni) skip?
@@ -312,7 +312,7 @@ class SemanticTsdfIntegrator : public vxb::MergedTsdfIntegrator {
       merged_point_C =
           (merged_point_C * merged_weight + point_C * point_weight) /
           (merged_weight + point_weight);
-      merged_color = Color::blendTwoColors(
+      merged_color = HashableColor::blendTwoColors(
           merged_color, merged_weight, color, point_weight);
       merged_weight += point_weight;
 
@@ -444,7 +444,7 @@ class SemanticTsdfIntegrator : public vxb::MergedTsdfIntegrator {
   // semantic_label measurement and confidence.
   void updateSemanticVoxel(const vxb::GlobalIndex& global_voxel_idx,
                            const SemanticProbabilities& measurement_frequencies,
-                           SemanticVoxel* semantic_voxel) const {
+                           SemanticVoxel* semantic_voxel) {
     CHECK_NOTNULL(semantic_voxel);
     // Lookup the mutex that is responsible for this voxel and lock it
     std::lock_guard<std::mutex> lock(mutexes_.get(global_voxel_idx));
@@ -482,7 +482,7 @@ class SemanticTsdfIntegrator : public vxb::MergedTsdfIntegrator {
     CHECK_NOTNULL(last_semantic_block);
     CHECK_NOTNULL(last_block_idx);
 
-    const vxb::BlockIndex block_idx = getBlockIndexFromGlobalVoxelIndex(
+    const vxb::BlockIndex block_idx = vxb::getBlockIndexFromGlobalVoxelIndex(
         global_voxel_idx, voxels_per_side_inv_);
 
     // TODO(margaritaG): citing Marius: this logic makes sure that if you
@@ -509,10 +509,10 @@ class SemanticTsdfIntegrator : public vxb::MergedTsdfIntegrator {
       } else {
         auto insert_status = temp_semantic_block_map_.emplace(
             block_idx,
-            std::make_shared<Block<SemanticVoxel>>(
+            std::make_shared<vxb::Block<SemanticVoxel>>(
                 voxels_per_side_,
                 voxel_size_,
-                getOriginPointFromGridIndex(block_idx, block_size_)));
+                vxb::getOriginPointFromGridIndex(block_idx, block_size_)));
 
         CHECK(insert_status.second)
             << "Block already exists when allocating at "
@@ -527,8 +527,8 @@ class SemanticTsdfIntegrator : public vxb::MergedTsdfIntegrator {
     // master.
     (*last_semantic_block)->updated() = true;
 
-    const VoxelIndex local_voxel_idx =
-        getLocalFromGlobalVoxelIndex(global_voxel_idx, voxels_per_side_);
+    const vxb::VoxelIndex local_voxel_idx =
+        vxb::getLocalFromGlobalVoxelIndex(global_voxel_idx, voxels_per_side_);
 
     return &((*last_semantic_block)->getVoxelByVoxelIndex(local_voxel_idx));
   }
@@ -644,7 +644,7 @@ class SemanticTsdfIntegrator : public vxb::MergedTsdfIntegrator {
 
   // THREAD SAFE
   void updateSemanticVoxelColor(const SemanticLabel& semantic_label,
-                                Color* semantic_voxel_color) const {
+                                HashableColor* semantic_voxel_color) const {
     CHECK_NOTNULL(semantic_voxel_color);
     // Do Not modify semantic_label_color_map_ here bcs we need to remain
     // thread-safe, and adding mutexes for coloring seems silly.

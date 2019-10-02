@@ -221,7 +221,7 @@ class SemanticMeshIntegrator : public vxb::MeshIntegrator<vxb::TsdfVoxel> {
 
   void getColorUsingColorScheme(const ColorMode& color_scheme,
                                 const SemanticVoxel& semantic_voxel,
-                                vxb::Color* color) {
+                                HashableColor* color) {
     CHECK_NOTNULL(color);
     switch (color_scheme) {
       case ColorMode::kSemanticProbability:

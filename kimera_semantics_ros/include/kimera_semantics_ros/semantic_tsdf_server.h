@@ -1,9 +1,9 @@
 #pragma once
 
-#include <kimera_semantics/semantic_tsdf_integrator.h>
 #include <voxblox_ros/tsdf_server.h>
 
 #include "kimera_semantics/ros_params.h"
+#include "kimera_semantics/semantic_tsdf_integrator.h"
 
 namespace kimera {
 
