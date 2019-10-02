@@ -5,7 +5,7 @@ find_package(catkin_simple REQUIRED)
 
 catkin_simple()
 
-cs_add_executable(${PROJECT_NAME}
+cs_add_library(${PROJECT_NAME}
   src/semantic_tsdf_integrator.cpp
 )
 

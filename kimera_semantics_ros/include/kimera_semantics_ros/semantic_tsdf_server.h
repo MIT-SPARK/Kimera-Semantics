@@ -1,35 +1,38 @@
 #pragma once
 
+#include <voxblox_ros/ros_params.h>
 #include <voxblox_ros/tsdf_server.h>
 
-#include "kimera_semantics/ros_params.h"
+#include "kimera_semantics/semantic_voxel.h"
+#include "kimera_semantics/semantic_mesh_integrator.h"
 #include "kimera_semantics/semantic_tsdf_integrator.h"
+#include "kimera_semantics_ros/ros_params.h"
 
 namespace kimera {
 
-class SemanticTsdfServer : public TsdfServer {
+class SemanticTsdfServer : public vxb::TsdfServer {
  public:
   SemanticTsdfServer(const ros::NodeHandle& nh,
                      const ros::NodeHandle& nh_private)
       : SemanticTsdfServer(nh,
                            nh_private,
-                           getTsdfMapConfigFromRosParam(nh_private),
-                           getTsdfIntegratorConfigFromRosParam(nh_private),
-                           getMeshIntegratorConfigFromRosParam(nh_private)) {}
+                           vxb::getTsdfMapConfigFromRosParam(nh_private),
+                           vxb::getTsdfIntegratorConfigFromRosParam(nh_private),
+                           vxb::getMeshIntegratorConfigFromRosParam(nh_private)) {}
 
   SemanticTsdfServer(const ros::NodeHandle& nh,
                      const ros::NodeHandle& nh_private,
-                     const TsdfMap::Config& config,
-                     const TsdfIntegratorBase::Config& integrator_config,
-                     const MeshIntegratorConfig& mesh_config)
-      : TsdfServer(nh, nh_private, config, integrator_config, mesh_config),
+                     const vxb::TsdfMap::Config& config,
+                     const vxb::TsdfIntegratorBase::Config& integrator_config,
+                     const vxb::MeshIntegratorConfig& mesh_config)
+      : vxb::TsdfServer(nh, nh_private, config, integrator_config, mesh_config),
         semantic_config_(
             getSemanticTsdfIntegratorConfigFromRosParam(nh_private)),
         semantic_mesh_config_(getSemanticMeshConfigFromRosParam(nh_private)),
         semantic_layer_(nullptr),
         semantic_label_to_color_(
             getSemanticLabelToColorCsvFilepathFromRosParam(nh_private)) {
-    semantic_layer_.reset(new Layer<SemanticVoxel>(
+    semantic_layer_.reset(new vxb::Layer<SemanticVoxel>(
         config.tsdf_voxel_size, config.tsdf_voxels_per_side));
     // Replace the TSDF integrator by the SemanticTsdfIntegrator
     semantic_config_.semantic_label_color_map_ =
@@ -67,7 +70,7 @@ class SemanticTsdfServer : public TsdfServer {
   SemanticMeshIntegrator::SemanticMeshConfig semantic_mesh_config_;
 
   // Layers.
-  std::unique_ptr<Layer<SemanticVoxel>> semantic_layer_;
+  std::unique_ptr<vxb::Layer<SemanticVoxel>> semantic_layer_;
 
   // Map from semantic label to actual color.
   const SemanticLabel2Color semantic_label_to_color_;

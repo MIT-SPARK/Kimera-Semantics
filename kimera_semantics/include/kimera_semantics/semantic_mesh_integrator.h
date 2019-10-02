@@ -45,7 +45,7 @@ class SemanticMeshIntegrator : public vxb::MeshIntegrator<vxb::TsdfVoxel> {
                          vxb::Layer<vxb::TsdfVoxel>* tsdf_layer,
                          vxb::Layer<SemanticVoxel>* semantic_layer,
                          vxb::MeshLayer* mesh_layer)
-      : vxb::MeshIntegrator(config, tsdf_layer, mesh_layer),
+      : vxb::MeshIntegrator<vxb::TsdfVoxel>(config, tsdf_layer, mesh_layer),
         semantic_layer_mutable_ptr_(CHECK_NOTNULL(semantic_layer)),
         semantic_layer_const_ptr_(CHECK_NOTNULL(semantic_layer)),
         semantic_mesh_config_(semantic_config) {}
@@ -55,7 +55,7 @@ class SemanticMeshIntegrator : public vxb::MeshIntegrator<vxb::TsdfVoxel> {
                          const vxb::Layer<vxb::TsdfVoxel>& tsdf_layer,
                          const vxb::Layer<SemanticVoxel>& semantic_layer,
                          vxb::MeshLayer* mesh_layer)
-      : vxb::MeshIntegrator(config, tsdf_layer, mesh_layer),
+      : vxb::MeshIntegrator<vxb::TsdfVoxel>(config, tsdf_layer, mesh_layer),
         semantic_layer_mutable_ptr_(nullptr),
         semantic_layer_const_ptr_(
             &semantic_layer),  // TODO(Toni) very dangerous
@@ -72,8 +72,10 @@ class SemanticMeshIntegrator : public vxb::MeshIntegrator<vxb::TsdfVoxel> {
     vxb::BlockIndexList all_tsdf_blocks;
     if (only_mesh_updated_blocks) {
       vxb::BlockIndexList all_label_blocks;
-      sdf_layer_const_->getAllUpdatedBlocks(&all_tsdf_blocks);
-      semantic_layer_mutable_ptr_->getAllUpdatedBlocks(&all_label_blocks);
+      sdf_layer_const_->getAllUpdatedBlocks(vxb::Update::kMesh, &all_tsdf_blocks);
+      // TODO(Toni): not sure if we have to make our own update bit.
+      semantic_layer_mutable_ptr_->getAllUpdatedBlocks(
+            vxb::Update::kMesh, &all_label_blocks);
       if (all_tsdf_blocks.size() == 0u && all_label_blocks.size() == 0u) {
         return false;
       }
@@ -86,7 +88,7 @@ class SemanticMeshIntegrator : public vxb::MeshIntegrator<vxb::TsdfVoxel> {
     }
 
     // Allocate all the mesh memory
-    for (const BlockIndex& block_index : all_tsdf_blocks) {
+    for (const vxb::BlockIndex& block_index : all_tsdf_blocks) {
       mesh_layer_->allocateMeshPtrByIndex(block_index);
     }
 
@@ -221,7 +223,7 @@ class SemanticMeshIntegrator : public vxb::MeshIntegrator<vxb::TsdfVoxel> {
 
   void getColorUsingColorScheme(const ColorMode& color_scheme,
                                 const SemanticVoxel& semantic_voxel,
-                                HashableColor* color) {
+                                vxb::Color* color) {
     CHECK_NOTNULL(color);
     switch (color_scheme) {
       case ColorMode::kSemanticProbability:
