@@ -2,7 +2,9 @@
 
 #include <fstream>
 #include <iostream>
+#include <limits>
 #include <string>
+#include <unordered_map>
 
 #include <voxblox/core/color.h>
 
