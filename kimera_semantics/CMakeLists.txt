@@ -6,6 +6,9 @@ find_package(catkin_simple REQUIRED)
 catkin_simple()
 
 cs_add_library(${PROJECT_NAME}
+  src/color.cpp
+  src/csv_iterator.cpp
+  src/semantic_mesh_integrator.cpp
   src/semantic_tsdf_integrator.cpp
 )
 
