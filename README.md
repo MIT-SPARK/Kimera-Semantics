@@ -69,7 +69,7 @@ source ~/catkin_ws/devel/setup.bash
 
   4. In another terminal, launch rviz for visualization:
   ```bash
-  rviz -d $(rospack find kimera_semantics_ros)/rviz/kimera_semantics.rviz
+  rviz -d $(rospack find kimera_semantics_ros)/rviz/kimera_semantics_gt.rviz
   ```
 
   Now, go back to the terminal where the rosbag was launched and just press `space` to run the rosbag.
