@@ -53,7 +53,7 @@ source ~/catkin_ws/devel/setup.bash
 
 # 2. Usage
 
-  0.  Download the [demo rosbag (click here to download)](https://drive.google.com/open?id=1jpuE6tMDoJyNq2Wu2EsVAc1r3e7qteUf) and save it inside the rosbag folder in the kimera folder: `./kimera/rosbag/kimera_semantics_demo.bag`.
+  0. Download the [demo rosbag (click here to download)](https://drive.google.com/open?id=1jpuE6tMDoJyNq2Wu2EsVAc1r3e7qteUf) and save it inside the rosbag folder in the kimera folder: `./kimera/rosbag/kimera_semantics_demo.bag`.
 
   1. As a general good practice, open a new terminal and run: `roscore`
 
@@ -74,10 +74,12 @@ source ~/catkin_ws/devel/setup.bash
 
   Now, go back to the terminal where the rosbag was launched and just press `space` to run the rosbag.
 
-  > Note that you will need to source your `catkin_ws` for each new terminal unless you added the following line to your `~/.bashrc` file:
+  > Note: you will need to source your `catkin_ws` for each new terminal unless you added the following line to your `~/.bashrc` file:
   > ```bash
   > source ~/catkin_ws/devel/setup.bash # Change `bash` to the shell you use.
   > ```
+
+  > Note 2: you might need to check/uncheck once the `Kimera Semantic 3D Mesh` left pane topic in rviz.
 
   3. FAQ
 
