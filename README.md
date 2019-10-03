@@ -51,7 +51,6 @@ source ~/.bashrc
 
 # 2. Usage
 
-## Online
   1. As a general good practice, open a new terminal and run: `roscore`
 
   2. In another terminal, launch Kimera-Semantics:
