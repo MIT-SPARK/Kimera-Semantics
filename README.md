@@ -1,22 +1,18 @@
 # Kimera-Semantics
 
 <div align="center">
-    <img src="docs/media/kimera_semantics.gif">
+    <img src="kimera/docs/media/kimera_semantics.gif">
 </div>
 
 # 1. Installation
 
 ## A. Prerequisities
 
-### i. ROS
-
-Install ROS by following [our reference](./docs/ros_installation.md), or the official [ROS website](https://www.ros.org/install/).
-
-### ii. Kimera-Semantics' dependencies
-
-- All dependencies are listed in the `.rosinstall` files inside the `install` folder:
+Install ROS by following [our reference](./kimera/docs/ros_installation.md), or the official [ROS website](https://www.ros.org/install/).
 
 ## B. Kimera-Semantics Installation
+
+Using [catkin](http://wiki.ros.org/catkin):
 
 ```bash
 # Setup catkin workspace
@@ -58,20 +54,19 @@ source ~/.bashrc
 ## Online
   1. As a general good practice, open a new terminal and run: `roscore`
 
-  2. In another terminal, launch SparkVIO ROS wrapper:
+  2. In another terminal, launch Kimera-Semantics:
   ```bash
-  roslaunch spark_vio_ros spark_vio_ros_euroc.launch
+  roslaunch kimera_semantics_ros kimera_semantics.launch
   ```
 
   3. In another terminal, launch rviz for visualization:
   ```bash
-  rviz -d $(rospack find spark_vio_ros)/rviz/spark_vio_euroc.rviz
+  rviz -d $(rospack find kimera_semantics_ros)/rviz/kimera_semantics.rviz
   ```
-  > Note: this rviz configuration makes use of a rviz plugin: [mesh_rviz_plugins](https://github.com/ToniRV/mesh_rviz_plugins). To visualize the textured 3D mesh, clone this plugin to your catkin workspace and catkin build it (note that this should be done automatically via `wstool`).
 
-  4. Finally, in another terminal, launch the downloaded Euroc rosbag:
+  4. Finally, in another terminal, launch the [provided rosbag (click here to download)](https://drive.google.com/file/d/1jpuE6tMDoJyNq2Wu2EsVAc1r3e7qteUf/view?usp=sharing):
   ```bash
-  rosbag play --clock /PATH/TO/EUROC_ROSBAG 
+  rosbag play --clock $(rospack find kimera_semantics_ros)/rosbags/kimera_semantics_demo.bag
   ```
 
   > Note that you will need to both source ROS and your `catkin_ws` for each new terminal unless you added the following lines to your `~/.bashrc` file:
@@ -79,14 +74,6 @@ source ~/.bashrc
   > source /opt/ros/melodic/setup.bash  # Change `melodic` for your ROS distribution.
   > source ~/catkin_ws/devel/setup.bash # Change `bash` to the shell you use.
   > ```
-
-## Offline
-  In this mode, the provided rosbag will be first parsed and then sent to the VIO for processing.
-  This is particularly useful when debugging to avoid potential ROS networking issues.
-  - To run, launch the SparkVIO ROS wrapper with the `online` parameter set to `false` and specify the rosbag's path:
-  ```bash
-  roslaunch spark_vio_ros spark_vio_ros_euroc.launch online:=false rosbag_path:="PATH/TO/ROSBAG"
-  ```
 
   3. FAQ
 
