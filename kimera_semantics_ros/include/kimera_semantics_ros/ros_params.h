@@ -1,4 +1,16 @@
+/**
+ * @file   ros_params.h
+ * @brief  Helper functions to parse ROS params
+ * @author Antoni Rosinol
+ */
+
 #pragma once
+
+#include <ros/ros.h>
+
+#include "kimera_semantics/common.h"
+#include "kimera_semantics/semantic_mesh_integrator.h"
+#include "kimera_semantics/semantic_tsdf_integrator.h"
 
 namespace kimera {
 
@@ -20,7 +32,7 @@ getSemanticTsdfIntegratorConfigFromRosParam(const ros::NodeHandle& nh_private) {
                    semantic_truncation_distance_factor,
                    semantic_truncation_distance_factor);
   semantic_config.semantic_truncation_distance_factor_ =
-      static_cast<FloatingPoint>(semantic_truncation_distance_factor);
+      static_cast<vxb::FloatingPoint>(semantic_truncation_distance_factor);
 
   return semantic_config;
 }

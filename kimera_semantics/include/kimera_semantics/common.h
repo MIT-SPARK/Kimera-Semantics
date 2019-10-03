@@ -1,3 +1,9 @@
+/**
+ * @file   common.h
+ * @brief  Common definitions
+ * @author Antoni Rosinol
+ */
+
 #pragma once
 
 #include <voxblox/core/common.h>

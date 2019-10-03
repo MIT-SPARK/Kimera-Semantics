@@ -87,3 +87,11 @@ source ~/.bashrc
   ```bash
   roslaunch spark_vio_ros spark_vio_ros_euroc.launch online:=false rosbag_path:="PATH/TO/ROSBAG"
   ```
+
+  3. FAQ
+
+  - Minkindr doesn't compile:
+    Catkin ignore the `minkindr_python` catkin package:
+    ```
+    touch ~/catkin_ws/src/minkindr/minkindr_python/CATKIN_IGNORE
+    ```
