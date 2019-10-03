@@ -1,3 +1,9 @@
+/**
+ * @file   csv_iterator.cpp
+ * @brief  Parser for CSV files
+ * @author Antoni Rosinol
+ */
+
 #include <iostream>
 #include <sstream>
 #include <string>

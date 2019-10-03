@@ -1,3 +1,9 @@
+/**
+ * @file   kimera_semantics_node.cpp
+ * @brief  Main for Kimera-Semantics
+ * @author Antoni Rosinol
+ */
+
 #include "kimera_semantics_ros/semantic_tsdf_server.h"
 
 int main(int argc, char** argv) {

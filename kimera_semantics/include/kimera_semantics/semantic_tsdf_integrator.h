@@ -1,3 +1,9 @@
+/**
+ * @file   semantic_tsdf_integrator.h
+ * @brief  Integrator of semantic and geometric information
+ * @author Antoni Rosinol
+ */
+
 #pragma once
 
 #include <functional>  // For placeholders for Semantics

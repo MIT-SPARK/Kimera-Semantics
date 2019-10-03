@@ -1,3 +1,9 @@
+/**
+ * @file   color.cpp
+ * @brief  Hashable color information for displaying semantic labels
+ * @author Antoni Rosinol
+ */
+
 #include <fstream>
 #include <iostream>
 #include <limits>

@@ -1,3 +1,9 @@
+/**
+ * @file   csv_iterator.h
+ * @brief  Parser for CSV files
+ * @author Antoni Rosinol
+ */
+
 #pragma once
 
 #include <iostream>

@@ -1,3 +1,8 @@
+/**
+ * @file   semantic_tsdf_server.h
+ * @brief  Semantic TSDF Server to interface with ROS
+ * @author Antoni Rosinol
+ */
 #pragma once
 
 #include <ros/ros.h>

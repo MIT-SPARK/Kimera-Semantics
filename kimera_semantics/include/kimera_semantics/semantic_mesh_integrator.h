@@ -1,3 +1,9 @@
+/**
+ * @file   semantic_mesh_integrator.h
+ * @brief  Builds semantic 3D mesh
+ * @author Antoni Rosinol
+ */
+
 #pragma once
 
 #include <limits>

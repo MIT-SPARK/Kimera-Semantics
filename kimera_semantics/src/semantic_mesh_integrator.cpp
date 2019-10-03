@@ -1,3 +1,9 @@
+/**
+ * @file   semantic_mesh_integrator.cpp
+ * @brief  Builds semantic 3D mesh
+ * @author Antoni Rosinol
+ */
+
 #include "kimera_semantics/semantic_mesh_integrator.h"
 
 #include <limits>

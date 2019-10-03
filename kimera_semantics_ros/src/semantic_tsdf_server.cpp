@@ -1,3 +1,9 @@
+/**
+ * @file   semantic_tsdf_server.cpp
+ * @brief  Semantic TSDF Server to interface with ROS
+ * @author Antoni Rosinol
+ */
+
 #include "kimera_semantics_ros/semantic_tsdf_server.h"
 
 namespace kimera {

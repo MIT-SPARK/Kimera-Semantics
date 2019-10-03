@@ -1,3 +1,9 @@
+/**
+ * @file   semantic_tsdf_integrator.cpp
+ * @brief  Integrator of semantic and geometric information
+ * @author Antoni Rosinol
+ */
+
 #include "kimera_semantics/semantic_tsdf_integrator.h"
 
 #include <functional>  // For placeholders for Semantics

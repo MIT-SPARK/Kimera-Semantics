@@ -1,3 +1,9 @@
+/**
+ * @file   color.h
+ * @brief  Hashable color information for displaying semantic labels
+ * @author Antoni Rosinol
+ */
+
 #pragma once
 
 #include <limits>

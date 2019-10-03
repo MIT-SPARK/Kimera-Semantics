@@ -1,3 +1,9 @@
+/**
+ * @file   semantic_voxel.h
+ * @brief  Definition of what a semantic voxel is
+ * @author Antoni Rosinol
+ */
+
 #pragma once
 
 #include "kimera_semantics/color.h"

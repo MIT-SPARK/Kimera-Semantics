@@ -1,3 +1,9 @@
+/**
+ * @file   ros_params.h
+ * @brief  Helper functions to parse ROS params
+ * @author Antoni Rosinol
+ */
+
 #pragma once
 
 #include <ros/ros.h>
