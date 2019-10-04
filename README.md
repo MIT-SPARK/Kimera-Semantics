@@ -81,7 +81,7 @@ source ~/catkin_ws/devel/setup.bash
 
   > Note 2: you might need to check/uncheck once the `Kimera Semantic 3D Mesh` left pane topic in rviz.
 
-  3. FAQ
+  # 3. FAQ
 
   - Minkindr doesn't compile:
     Catkin ignore the `minkindr_python` catkin package:
