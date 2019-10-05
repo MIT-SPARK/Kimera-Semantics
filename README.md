@@ -8,7 +8,14 @@
 
 ## A. Prerequisities
 
-Install ROS by following [our reference](./kimera/docs/ros_installation.md), or the official [ROS website](https://www.ros.org/install/).
+- Install ROS by following [our reference](./kimera/docs/ros_installation.md), or the official [ROS website](https://www.ros.org/install/).
+
+- Install system dependencies:
+```bash
+sudo apt-get install python-wstool python-catkin-tools  protobuf-compiler autoconf
+# Change `melodic` below for your own ROS distro
+sudo apt-get install ros-melodic-cmake-modules
+```
 
 ## B. Kimera-Semantics Installation
 
@@ -31,7 +38,8 @@ cd ~/catkin_ws/src
 git clone git@github.com:MIT-SPARK/Kimera-Semantics.git
 
 # Install dependencies from rosinstall file using wstool
-wstool init
+wstool init # Use unless wstool is already initialized
+
 # For ssh:
 wstool merge Kimera-Semantics/kimera/install/kimera_semantics_ssh.rosinstall
 # For https:
