@@ -24,7 +24,7 @@ We kindly ask to cite our paper if you find this library useful:
 
 ### Related publications
 
-Our work is based on Voxblox:
+Our work is built using Voxblox:
 
 Helen Oleynikova, Zachary Taylor, Marius Fehr, Juan Nieto, and Roland Siegwart, **Voxblox: Incremental 3D Euclidean Signed Distance Fields for On-Board MAV Planning**, in IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS), 2016.
 
