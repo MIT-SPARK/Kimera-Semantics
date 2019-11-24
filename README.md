@@ -9,7 +9,7 @@
 We kindly ask to cite our paper if you find this library useful:
 
  - A. Rosinol, M. Abate, Y. Chang, L. Carlone. [**Kimera: an Open-Source Library for Real-Time Metric-Semantic Localization and Mapping**](https://arxiv.org/abs/1910.02490). arXiv preprint [arXiv:1910.02490](https://arxiv.org/abs/1910.02490).
- ```
+ ```latex
  @misc{Rosinol19arxiv-Kimera,
    title = {Kimera: an Open-Source Library for Real-Time Metric-Semantic Localization and Mapping},
    author = {Rosinol, Antoni and Abate, Marcus and Chang, Yun and Carlone, Luca},
@@ -24,9 +24,9 @@ We kindly ask to cite our paper if you find this library useful:
 
 ### Related publications
 
-Our work is built using Voxblox:
+Our work is built using Voxblox, an amazing framework to build your own 3D voxelized world:
 
-Helen Oleynikova, Zachary Taylor, Marius Fehr, Juan Nieto, and Roland Siegwart, **Voxblox: Incremental 3D Euclidean Signed Distance Fields for On-Board MAV Planning**, in IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS), 2016.
+- Helen Oleynikova, Zachary Taylor, Marius Fehr, Juan Nieto, and Roland Siegwart, [**Voxblox: Incremental 3D Euclidean Signed Distance Fields for On-Board MAV Planning**](https://github.com/ethz-asl/voxblox), in IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS), 2016.
 
 # 1. Installation
 
