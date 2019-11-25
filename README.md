@@ -28,6 +28,9 @@ Our work is built using Voxblox, an amazing framework to build your own 3D voxel
 
 - Helen Oleynikova, Zachary Taylor, Marius Fehr, Juan Nieto, and Roland Siegwart, [**Voxblox: Incremental 3D Euclidean Signed Distance Fields for On-Board MAV Planning**](https://github.com/ethz-asl/voxblox), in IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS), 2016.
 
+A related work to ours is Voxblox++ which also uses Voxblox for geometric and instance-aware segmentation, differently from our dense scene segmentation, check it out as well!:
+- Margarita Grinvald, Fadri Furrer, Tonci Novkovic, Jen Jen Chung, Cesar Cadena, Roland Siegwart, and Juan Nieto, [**Volumetric Instance-Aware Semantic Mapping and 3D Object Discovery**](https://github.com/ethz-asl/voxblox-plusplus), in IEEE Robotics and Automation Letters, July 2019.
+
 # 1. Installation
 
 ## A. Prerequisities
