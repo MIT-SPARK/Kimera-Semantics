@@ -27,6 +27,29 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
+// Further, this part of the code is derived from OpenChisel
+// https://github.com/personalrobotics/OpenChisel
+// The MIT License (MIT)
+// Copyright (c) 2014 Matthew Klingensmith and Ivan Dryanovski
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all
+// copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
 
 /**
  * @file   semantic_mesh_integrator.cpp
@@ -60,8 +83,8 @@ SemanticMeshIntegrator::SemanticMeshIntegrator(
     vxb::Layer<SemanticVoxel>* semantic_layer,
     vxb::MeshLayer* mesh_layer)
     : vxb::MeshIntegrator<vxb::TsdfVoxel>(config, tsdf_layer, mesh_layer),
-      semantic_layer_mutable_ptr_(CHECK_NOTNULL(semantic_layer)),
-      semantic_layer_const_ptr_(CHECK_NOTNULL(semantic_layer)),
+      semantic_layer_mutable_(CHECK_NOTNULL(semantic_layer)),
+      semantic_layer_const_(CHECK_NOTNULL(semantic_layer)),
       semantic_mesh_config_(semantic_config) {}
 
 SemanticMeshIntegrator::SemanticMeshIntegrator(
@@ -71,36 +94,29 @@ SemanticMeshIntegrator::SemanticMeshIntegrator(
     const vxb::Layer<SemanticVoxel>& semantic_layer,
     vxb::MeshLayer* mesh_layer)
     : vxb::MeshIntegrator<vxb::TsdfVoxel>(config, tsdf_layer, mesh_layer),
-      semantic_layer_mutable_ptr_(nullptr),
-      semantic_layer_const_ptr_(&semantic_layer),  // TODO(Toni) very dangerous
+      semantic_layer_mutable_(nullptr),
+      semantic_layer_const_(&semantic_layer),  // TODO(Toni) very dangerous
       semantic_mesh_config_(semantic_config) {}
 
 /// Generates mesh from the tsdf and semantic layer.
-bool SemanticMeshIntegrator::generateMesh(bool only_mesh_updated_blocks,
+void SemanticMeshIntegrator::generateMesh(bool only_mesh_updated_blocks,
                                           bool clear_updated_flag) {
   CHECK(!clear_updated_flag || ((sdf_layer_mutable_ != nullptr) &&
-                                (semantic_layer_mutable_ptr_ != nullptr)))
+                                (semantic_layer_mutable_ != nullptr)))
       << "If you would like to modify the updated flag in the blocks, please "
-      << "use the constructor that provides a non-const link to the sdf and "
-         "label layers!";
+      << "use the constructor that provides a non-const link to the sdf "
+      << "layer!";
 
   vxb::BlockIndexList all_tsdf_blocks;
+  vxb::BlockIndexList all_semantic_blocks;
   if (only_mesh_updated_blocks) {
-    vxb::BlockIndexList all_label_blocks;
     sdf_layer_const_->getAllUpdatedBlocks(vxb::Update::kMesh, &all_tsdf_blocks);
-    // TODO(Toni): not sure if we have to make our own update bit.
-    semantic_layer_mutable_ptr_->getAllUpdatedBlocks(vxb::Update::kMesh,
-                                                     &all_label_blocks);
-    if (all_tsdf_blocks.size() == 0u && all_label_blocks.size() == 0u) {
-      return false;
-    }
-    all_tsdf_blocks.insert(all_tsdf_blocks.end(),
-                           all_label_blocks.begin(),
-                           all_label_blocks.end());
+    semantic_layer_const_->getAllUpdatedBlocks(vxb::Update::kMesh, &all_semantic_blocks);
   } else {
-    LOG(WARNING) << "Mesh update all blocks not implemented for semantics...";
     sdf_layer_const_->getAllAllocatedBlocks(&all_tsdf_blocks);
+    semantic_layer_const_->getAllAllocatedBlocks(&all_semantic_blocks);
   }
+  all_tsdf_blocks.insert(all_tsdf_blocks.end(), all_semantic_blocks.begin(), all_semantic_blocks.end());
 
   // Allocate all the mesh memory
   for (const vxb::BlockIndex& block_index : all_tsdf_blocks) {
@@ -113,30 +129,25 @@ bool SemanticMeshIntegrator::generateMesh(bool only_mesh_updated_blocks,
   std::list<std::thread> integration_threads;
   for (size_t i = 0; i < config_.integrator_threads; ++i) {
     integration_threads.emplace_back(
-        &SemanticMeshIntegrator::generateMeshBlocksFunction,
-        this,
-        all_tsdf_blocks,
-        clear_updated_flag,
-        index_getter.get());
+        &SemanticMeshIntegrator::generateMeshBlocksFunction, this, all_tsdf_blocks,
+        clear_updated_flag, index_getter.get());
   }
 
   for (std::thread& thread : integration_threads) {
     thread.join();
   }
-
-  return true;
 }
 
 void SemanticMeshIntegrator::generateMeshBlocksFunction(
     const vxb::BlockIndexList& all_tsdf_blocks,
     bool clear_updated_flag,
     vxb::ThreadSafeIndex* index_getter) {
-  CHECK_NOTNULL(index_getter);
+  DCHECK(index_getter != nullptr);
   CHECK(!clear_updated_flag || (sdf_layer_mutable_ != nullptr) ||
-        (semantic_layer_mutable_ptr_ != nullptr))
+        (semantic_layer_mutable_ != nullptr))
       << "If you would like to modify the updated flag in the blocks, please "
-      << "use the constructor that provides a non-const link to the sdf and "
-         "label layers!";
+      << "use the constructor that provides a non-const link to the sdf "
+         "layer!";
 
   size_t list_idx;
   while (index_getter->getNextIndex(&list_idx)) {
@@ -145,13 +156,10 @@ void SemanticMeshIntegrator::generateMeshBlocksFunction(
     if (clear_updated_flag) {
       typename vxb::Block<vxb::TsdfVoxel>::Ptr tsdf_block =
           sdf_layer_mutable_->getBlockPtrByIndex(block_idx);
+      tsdf_block->updated().reset(vxb::Update::kMesh);
       typename vxb::Block<SemanticVoxel>::Ptr semantic_block =
-          semantic_layer_mutable_ptr_->getBlockPtrByIndex(block_idx);
-      // Use set in master
-      DCHECK(tsdf_block);
-      tsdf_block->updated() = false;
-      DCHECK(semantic_block);
-      semantic_block->updated() = false;
+          semantic_layer_mutable_->getBlockPtrByIndex(block_idx);
+      semantic_block->updated().reset(vxb::Update::kMesh);
     }
   }
 }
@@ -162,102 +170,74 @@ void SemanticMeshIntegrator::updateMeshForBlock(
   mesh->clear();
   // This block should already exist, otherwise it makes no sense to update
   // the mesh for it. ;)
-  vxb::Block<vxb::TsdfVoxel>::ConstPtr tsdf_block =
+  typename vxb::Block<vxb::TsdfVoxel>::ConstPtr tsdf_block =
       sdf_layer_const_->getBlockPtrByIndex(block_index);
-  vxb::Block<SemanticVoxel>::ConstPtr semantic_block =
-      semantic_layer_const_ptr_->getBlockPtrByIndex(block_index);
+  typename vxb::Block<SemanticVoxel>::ConstPtr semantic_block =
+      semantic_layer_const_->getBlockPtrByIndex(block_index);
 
   if (!tsdf_block) {
-    LOG(FATAL) << "Trying to mesh a non-existent block at index: "
+    LOG(ERROR) << "Trying to mesh a non-existent tsdf block at index: "
                << block_index.transpose();
     return;
   }
-
   extractBlockMesh(tsdf_block, mesh);
   // Update colors if needed.
   if (config_.use_color) {
-    // CHECK(semantic_block) << "Non-existent semantic block!";
-    updateMeshBlockColor(tsdf_block, semantic_block, mesh.get());
+    if (semantic_block) {
+      updateMeshColor(*semantic_block, mesh.get());
+    } else {
+      MeshIntegrator::updateMeshColor(*tsdf_block, mesh.get());
+    }
   }
 
   mesh->updated = true;
 }
 
-void SemanticMeshIntegrator::updateMeshBlockColor(
-    vxb::Block<vxb::TsdfVoxel>::ConstPtr tsdf_block,
-    vxb::Block<SemanticVoxel>::ConstPtr semantic_block,
-    vxb::Mesh* mesh_block) {
-  CHECK_NOTNULL(mesh_block);
-  switch (semantic_mesh_config_.color_mode) {
-    case ColorMode::kColor:
-    case ColorMode::kNormals:
-      CHECK(tsdf_block) << "Non-existent tsdf block!";
-      MeshIntegrator::updateMeshColor(*tsdf_block, mesh_block);
-      break;
-    case ColorMode::kSemanticLabel:
-    case ColorMode::kSemanticProbability:
-      // CHECK(semantic_block) << "Non-existent semantic block!";
-      if (semantic_block) {
-        updateMeshColor(*semantic_block, mesh_block);
-      } else {
-        // TODO(Toni): there should be no missing semantic block:
-        // for each tsdf there should be a semantic block, but for each
-        // semantic block there should not be necessarily a tsdf block.
-        VLOG(1) << "Missing semantic block for given tsdf block...";
-        MeshIntegrator::updateMeshColor(*tsdf_block, mesh_block);
-      }
-      break;
-    default:
-      LOG(FATAL) << "Color scheme not recognized.";
-  }
-}
-
 void SemanticMeshIntegrator::updateMeshColor(
-    const vxb::Block<SemanticVoxel>& label_block,
+    const vxb::Block<SemanticVoxel>& block,
     vxb::Mesh* mesh) {
-  CHECK_NOTNULL(mesh);
+  DCHECK(mesh != nullptr);
 
   mesh->colors.clear();
   mesh->colors.resize(mesh->indices.size());
 
   // Use nearest-neighbor search.
-  for (size_t i = 0u; i < mesh->vertices.size(); ++i) {
+  for (size_t i = 0; i < mesh->vertices.size(); ++i) {
     const vxb::Point& vertex = mesh->vertices[i];
-    vxb::VoxelIndex voxel_index =
-        label_block.computeVoxelIndexFromCoordinates(vertex);
-    SemanticVoxel voxel;
-    if (label_block.isValidVoxelIndex(voxel_index)) {
-      voxel = label_block.getVoxelByVoxelIndex(voxel_index);
+    vxb::VoxelIndex voxel_index = block.computeVoxelIndexFromCoordinates(vertex);
+    if (block.isValidVoxelIndex(voxel_index)) {
+      const SemanticVoxel& voxel = block.getVoxelByVoxelIndex(voxel_index);
+      getColorUsingColorMode(
+            semantic_mesh_config_.color_mode, voxel, &(mesh->colors[i]));
     } else {
       const typename vxb::Block<SemanticVoxel>::ConstPtr neighbor_block =
-          semantic_layer_const_ptr_->getBlockPtrByCoordinates(vertex);
-      voxel = neighbor_block->getVoxelByCoordinates(vertex);
+          semantic_layer_const_->getBlockPtrByCoordinates(vertex);
+      const SemanticVoxel& voxel = neighbor_block->getVoxelByCoordinates(vertex);
+      getColorUsingColorMode(
+            semantic_mesh_config_.color_mode, voxel, &(mesh->colors[i]));
     }
-    getColorUsingColorScheme(
-        semantic_mesh_config_.color_mode, voxel, &(mesh->colors[i]));
   }
 }
 
-void SemanticMeshIntegrator::getColorUsingColorScheme(
-    const ColorMode& color_scheme,
+void SemanticMeshIntegrator::getColorUsingColorMode(
+    const ColorMode& color_mode,
     const SemanticVoxel& semantic_voxel,
     vxb::Color* color) {
   CHECK_NOTNULL(color);
-  switch (color_scheme) {
+  switch (color_mode) {
     case ColorMode::kSemanticProbability:
-      // TODO(Toni):
-      // Might be a bit expensive to calc all these exponentials...
+      // TODO(Toni): Might be a bit expensive to calc all these exponentials...
       *color = vxb::rainbowColorMap(std::exp(
           semantic_voxel.semantic_priors[semantic_voxel.semantic_label]));
       break;
-    case ColorMode::kSemanticLabel:
+    case ColorMode::kSemantic:
       *color = semantic_mesh_config_.semantic_label_color_map.at(
           semantic_voxel.semantic_label);
       break;
     default:
-      LOG(FATAL) << "Unknown mesh color scheme: "
-                 << static_cast<std::underlying_type<ColorMode>::type>(
-                        semantic_mesh_config_.color_mode);
+      *color = semantic_mesh_config_.semantic_label_color_map.at(
+            semantic_voxel.semantic_label);
+      break;
   }
 }
 

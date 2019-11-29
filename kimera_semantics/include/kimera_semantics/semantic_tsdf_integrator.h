@@ -151,6 +151,7 @@ class SemanticTsdfIntegrator : public vxb::MergedTsdfIntegrator {
   // semantic_label measurement and confidence.
   void updateSemanticVoxel(const vxb::GlobalIndex& global_voxel_idx,
                            const SemanticProbabilities& measurement_frequencies,
+                           vxb::TsdfVoxel* tsdf_voxel,
                            SemanticVoxel* semantic_voxel);
 
  private:

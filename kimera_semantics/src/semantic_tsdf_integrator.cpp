@@ -283,9 +283,9 @@ void SemanticTsdfIntegrator::integrateVoxel(
     const SemanticLabels& semantic_labels,
     const bool enable_anti_grazing,
     const bool clearing_ray,
-    const VoxelMapElement& global_voxel_idx_to_point_indices,
+    const VoxelMapElement& kv,
     const VoxelMap& voxel_map) {
-  if (global_voxel_idx_to_point_indices.second.empty()) {
+  if (kv.second.empty()) {
     return;
   }
 
@@ -304,7 +304,7 @@ void SemanticTsdfIntegrator::integrateVoxel(
   //                   measured depth value summarized from all depth values.
   // - merged_color: color to ray-cast through the voxels.
   // - semantic_label_frequencies: number of observed labels in the voxel.
-  for (const size_t& pt_idx : global_voxel_idx_to_point_indices.second) {
+  for (const size_t& pt_idx : kv.second) {
     const vxb::Point& point_C = points_C[pt_idx];
     const HashableColor& color = colors[pt_idx];
 
@@ -341,9 +341,9 @@ void SemanticTsdfIntegrator::integrateVoxel(
   vxb::GlobalIndex global_voxel_idx;
   // TODO(Toni): also put semantic_block
   // and tsdf_block outside while loop!!!!!! Why is merged not doing this???
-  vxb::BlockIndex tsdf_block_idx;
+  vxb::BlockIndex block_idx;
   vxb::BlockIndex semantic_block_idx;
-  vxb::Block<vxb::TsdfVoxel>::Ptr tsdf_block = nullptr;
+  vxb::Block<vxb::TsdfVoxel>::Ptr block = nullptr;
   vxb::Block<SemanticVoxel>::Ptr semantic_block = nullptr;
   // This bool checks if the ray already updated a voxel as empty.
   bool ray_updated_voxel_empty = false;
@@ -351,89 +351,25 @@ void SemanticTsdfIntegrator::integrateVoxel(
     if (enable_anti_grazing) {
       // Check if this one is already the block hash map for this
       // insertion. Skip this to avoid grazing.
-      if ((clearing_ray ||
-           global_voxel_idx != global_voxel_idx_to_point_indices.first) &&
+      if ((clearing_ray || global_voxel_idx != kv.first) &&
           voxel_map.find(global_voxel_idx) != voxel_map.end()) {
         continue;
       }
     }
 
-    // This is supposedly thread-safe...
-    vxb::TsdfVoxel* tsdf_voxel = allocateStorageAndGetVoxelPtr(
-        global_voxel_idx, &tsdf_block, &tsdf_block_idx);
-    CHECK(tsdf_block);
-    CHECK_NOTNULL(tsdf_voxel);
-
-    updateTsdfVoxel(origin,
-                    merged_point_G,
-                    global_voxel_idx,
+    vxb::TsdfVoxel* voxel =
+        allocateStorageAndGetVoxelPtr(global_voxel_idx, &block, &block_idx);
+    updateTsdfVoxel(origin, merged_point_G, global_voxel_idx,
                     merged_color,
-                    merged_weight,
-                    tsdf_voxel);
+                    merged_weight, voxel);
 
-    // TODO(Toni): if we add the "empty" label, this should not be necessary
-    // but we will be doing quite a bit more of computation...
-    // If voxel carving is enabled, then only allocate the label voxels
-    // within semantic_truncation_distance_factor times the truncation
-    // distance from the surface.
-    if (config_.voxel_carving_enabled) {
-      if (std::abs(tsdf_voxel->distance) <
-          semantic_config_.semantic_truncation_distance_factor_ *
-              config_.default_truncation_distance) {
-        // if (ray_updated_voxel_empty) {
-        //  //LOG(WARNING) << "This ray has already started updating empty"
-        //  //                       "... How is this possible? TSDF is not
-        //  what"
-        //  //                       " you want dist_z is!";
-        //  continue;
-        //}
-        SemanticVoxel* semantic_voxel = allocateStorageAndGetSemanticVoxelPtr(
-            global_voxel_idx, &semantic_block, &semantic_block_idx);
-        CHECK(semantic_block);
-        CHECK_NOTNULL(semantic_voxel);
-        updateSemanticVoxel(
-            global_voxel_idx, semantic_label_frequencies, semantic_voxel);
-      } else {
-        VLOG(10) << "Not allocating voxel: too far from nearest object.";
-      }
-    } else {
-      LOG_FIRST_N(WARNING, 1) << "Semantic voxel carving disabled.";
-      // Allocate voxel no matter its distance to a surface. When we are
-      // far away from a surface, we update the "empty" label.
-      SemanticVoxel* semantic_voxel = allocateStorageAndGetSemanticVoxelPtr(
-          global_voxel_idx, &semantic_block, &semantic_block_idx);
-      CHECK(semantic_block);
-      CHECK_NOTNULL(semantic_voxel);
-      if (std::abs(tsdf_voxel->distance) <
-          semantic_config_.semantic_truncation_distance_factor_ *
-              config_.default_truncation_distance) {
-        // if (ray_updated_voxel_empty) {
-        //  //LOG(WARNING) << "This ray has already started updating empty"
-        //  //                       "... How is this possible? TSDF is not
-        //  what"
-        //  //                       " you want dist_z is!";
-        //  continue;
-        //}
-        updateSemanticVoxel(
-            global_voxel_idx, semantic_label_frequencies, semantic_voxel);
-      } else {
-        // Update empty.
-        ray_updated_voxel_empty = true;
-        // If we are far from the surface start to update the semantic
-        // labels of the voxels as "empty".
-        SemanticProbabilities update_empty = SemanticProbabilities::Zero();
-        // Use as evidence of this voxel being empty all the points used
-        // inside this merged ray.
-        CHECK_EQ(update_empty.rows(), semantic_label_frequencies.rows());
-        // Maybe we should use
-        // global_voxel_idx_to_point_indices.second.size()?
-        // TODO(Toni): the sum of semantic_label_frequencies is -inf
-        // sometimes.
-        update_empty[0u] = 1.0;  // * semantic_label_frequencies.sum();
-        CHECK_GE(update_empty.sum(), 1.0);
-        updateSemanticVoxel(global_voxel_idx, update_empty, semantic_voxel);
-      }
-    }
+    SemanticVoxel* semantic_voxel =
+        allocateStorageAndGetSemanticVoxelPtr(global_voxel_idx, &semantic_block, &semantic_block_idx);
+    updateSemanticVoxel(global_voxel_idx,
+                        semantic_label_frequencies,
+                        voxel,
+                        semantic_voxel);
+
   }
 }
 
@@ -446,50 +382,63 @@ SemanticProbability SemanticTsdfIntegrator::computeMeasurementProbability(
 void SemanticTsdfIntegrator::updateSemanticVoxel(
     const vxb::GlobalIndex& global_voxel_idx,
     const SemanticProbabilities& measurement_frequencies,
+    vxb::TsdfVoxel* tsdf_voxel,
     SemanticVoxel* semantic_voxel) {
-  CHECK_NOTNULL(semantic_voxel);
-  // Lookup the mutex that is responsible for this voxel and lock it
-  std::lock_guard<std::mutex> lock(mutexes_.get(global_voxel_idx));
+  DCHECK(tsdf_voxel != nullptr);
+  DCHECK(semantic_voxel != nullptr);
 
-  // Thread-safe region, you can modify the Voxel!
-  CHECK_NOTNULL(semantic_voxel);
+  // Similar to color blending in Voxblox tsdf_integrator.cc,
+  // we perform semantic inference only if close to the surface:
+  // Quoting Voxblox:
+  // color blending is expensive only do it close to the surface
+  //  if (std::abs(sdf) < config_.default_truncation_distance) {
+  if (std::abs(tsdf_voxel->distance) < config_.default_truncation_distance) {
+    // Lookup the mutex that is responsible for this voxel and lock it
+    std::lock_guard<std::mutex> lock(mutexes_.get(global_voxel_idx));
+    ////// Here is the actual logic of Kimera-Semantics:   /////////////////////
+    // Calculate new probabilities given the measurement frequencies.
+    updateSemanticVoxelProbabilities(
+          measurement_frequencies,
+          &semantic_voxel->semantic_priors);
 
-  // Calculate new probabilities given the measurement frequencies.
-  updateSemanticVoxelProbabilities(measurement_frequencies,
-                                   &semantic_voxel->semantic_priors);
+    // Get MLE semantic label.
+    calculateMaximumLikelihoodLabel(semantic_voxel->semantic_priors,
+                                    &semantic_voxel->semantic_label);
 
-  // Get MLE semantic label.
-  calculateMaximumLikelihoodLabel(semantic_voxel->semantic_priors,
-                                  &semantic_voxel->semantic_label);
-
-  // Colorize according to current MLE semantic label.
-  updateSemanticVoxelColor(semantic_voxel->semantic_label,
-                           &semantic_voxel->color);
+    // Colorize according to current MLE semantic label.
+    updateSemanticVoxelColor(semantic_voxel->semantic_label,
+                             &semantic_voxel->color);
+    ////////////////////////////////////////////////////////////////////////////
+  }
 }
 
+// Will return a pointer to a voxel located at global_voxel_idx in the tsdf
+// layer. Thread safe.
+// Takes in the last_block_idx and last_block to prevent unneeded map lookups.
+// If the block this voxel would be in has not been allocated, a block in
+// temp_block_map_ is created/accessed and a voxel from this map is returned
+// instead. Unlike the layer, accessing temp_block_map_ is controlled via a
+// mutex allowing it to grow during integration.
+// These temporary blocks can be merged into the layer later by calling
+// updateLayerWithStoredBlocks()
 SemanticVoxel* SemanticTsdfIntegrator::allocateStorageAndGetSemanticVoxelPtr(
     const vxb::GlobalIndex& global_voxel_idx,
-    vxb::Block<SemanticVoxel>::Ptr* last_semantic_block,
+    vxb::Block<SemanticVoxel>::Ptr* last_block,
     vxb::BlockIndex* last_block_idx) {
-  CHECK_NOTNULL(last_semantic_block);
-  CHECK_NOTNULL(last_block_idx);
+  DCHECK(last_block != nullptr);
+  DCHECK(last_block_idx != nullptr);
 
-  const vxb::BlockIndex block_idx = vxb::getBlockIndexFromGlobalVoxelIndex(
+  const vxb::BlockIndex& block_idx = vxb::getBlockIndexFromGlobalVoxelIndex(
       global_voxel_idx, voxels_per_side_inv_);
 
-  // TODO(margaritaG): citing Marius: this logic makes sure that if you
-  // already have the right block pointer you don't need to go looking for it
-  // again, so in order to make this logic effective you need to move the
-  // block ptr and block idx outside of the while loop in the function calling
-  // this.
-  if ((block_idx != *last_block_idx) || (*last_semantic_block == nullptr)) {
-    *last_semantic_block = semantic_layer_->getBlockPtrByIndex(block_idx);
+  if ((block_idx != *last_block_idx) || (*last_block == nullptr)) {
+    *last_block = semantic_layer_->getBlockPtrByIndex(block_idx);
     *last_block_idx = block_idx;
   }
 
   // If no block at this location currently exists, we allocate a temporary
   // voxel that will be merged into the map later
-  if (*last_semantic_block == nullptr) {
+  if (*last_block == nullptr) {
     // To allow temp_label_block_map_ to grow we can only let
     // one thread in at once
     std::lock_guard<std::mutex> lock(temp_semantic_block_mutex_);
@@ -497,31 +446,28 @@ SemanticVoxel* SemanticTsdfIntegrator::allocateStorageAndGetSemanticVoxelPtr(
     typename vxb::Layer<SemanticVoxel>::BlockHashMap::iterator it =
         temp_semantic_block_map_.find(block_idx);
     if (it != temp_semantic_block_map_.end()) {
-      *last_semantic_block = it->second;
+      *last_block = it->second;
     } else {
       auto insert_status = temp_semantic_block_map_.emplace(
           block_idx,
           std::make_shared<vxb::Block<SemanticVoxel>>(
-              voxels_per_side_,
-              voxel_size_,
+              voxels_per_side_, voxel_size_,
               vxb::getOriginPointFromGridIndex(block_idx, block_size_)));
 
-      CHECK(insert_status.second) << "Block already exists when allocating at "
-                                  << block_idx.transpose();
+      DCHECK(insert_status.second) << "Block already exists when allocating at "
+                                   << block_idx.transpose();
 
-      *last_semantic_block = insert_status.first->second;
+      *last_block = insert_status.first->second;
     }
   }
 
   // Only used if someone calls the getAllUpdatedBlocks I believe.
-  // (*last_semantic_block)->updated().set(); // do this when updating to
-  // master.
-  (*last_semantic_block)->updated() = true;
+  (*last_block)->updated() = true;
 
   const vxb::VoxelIndex local_voxel_idx =
       vxb::getLocalFromGlobalVoxelIndex(global_voxel_idx, voxels_per_side_);
 
-  return &((*last_semantic_block)->getVoxelByVoxelIndex(local_voxel_idx));
+  return &((*last_block)->getVoxelByVoxelIndex(local_voxel_idx));
 }
 
 // NOT THREAD SAFE
