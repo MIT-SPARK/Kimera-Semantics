@@ -123,7 +123,8 @@ class SemanticMeshIntegrator : public vxb::MeshIntegrator<vxb::TsdfVoxel> {
                          vxb::MeshLayer* mesh_layer);
 
   /// Generates mesh from the tsdf and semantic layer.
-  void generateMesh(bool only_mesh_updated_blocks, bool clear_updated_flag);
+  void generateMesh(bool only_mesh_updated_blocks,
+                    bool clear_updated_flag) ;
 
  protected:
   // Needs to be thread-safe
@@ -141,8 +142,8 @@ class SemanticMeshIntegrator : public vxb::MeshIntegrator<vxb::TsdfVoxel> {
                        vxb::Mesh* mesh);
 
   void getColorUsingColorMode(const ColorMode& color_mode,
-                                const SemanticVoxel& semantic_voxel,
-                                vxb::Color* color);
+                              const SemanticVoxel& semantic_voxel,
+                              vxb::Color* color);
 
  protected:
   // Having both a const and a mutable pointer to the layer allows this

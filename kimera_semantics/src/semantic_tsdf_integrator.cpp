@@ -53,15 +53,12 @@
 
 namespace kimera {
 
-std::string SemanticTsdfIntegrator::SemanticConfig::print() const {
-  std::stringstream ss;
-  // clang-format off
-  ss << "================== Semantic Integrator Config ====================\n";
-  ss << " - semantic_truncation_distance_factor:               " << semantic_truncation_distance_factor_ << "\n";
-  ss << "==============================================================\n";
-  // clang-format on
-  return ss.str();
-}
+enum class ColorMode {
+  kColor = 0,
+  kNormals = 1,
+  kSemantic = 2,
+  kSemanticProbability = 3,
+};
 
 SemanticTsdfIntegrator::SemanticTsdfIntegrator(
     const Config& config,
@@ -75,7 +72,7 @@ SemanticTsdfIntegrator::SemanticTsdfIntegrator(
   SemanticProbability match_probability =
       semantic_config.semantic_measurement_probability_;
   SemanticProbability non_match_probability =
-      1.0 - semantic_config.semantic_measurement_probability_;
+      1.0f - semantic_config.semantic_measurement_probability_;
   CHECK_GT(match_probability, 0.0);
   CHECK_GT(non_match_probability, 0.0);
   CHECK_LT(match_probability, 1.0);
@@ -107,8 +104,10 @@ SemanticTsdfIntegrator::SemanticTsdfIntegrator(
 void SemanticTsdfIntegrator::integratePointCloud(
     const vxb::Transformation& T_G_C,
     const vxb::Pointcloud& points_C,
-    const HashableColors& colors,
+    const vxb::Colors& colors,
     const bool freespace_points) {
+  LOG(ERROR) << "INTEGRATE POINTCLOUD DERIVED";
+  HashableColors hash_colors(colors.size());
   SemanticLabels semantic_labels(colors.size());
   // TODO(Toni): parallelize with openmp
   for (size_t i = 0; i < colors.size(); i++) {
@@ -121,13 +120,14 @@ void SemanticTsdfIntegrator::integratePointCloud(
     //            <<  std::to_string(colors[i].b);
     // TODO(Toni): Pointcloud recolor sets `a` field to 0. Making the
     // map lookup fail.
-    const HashableColor& color = colors[i];
-    HashableColor color_a = HashableColor(color.r, color.g, color.b, 255u);
+    const vxb::Color& color = colors[i];
+    hash_colors.at(i) = HashableColor(color.r, color.g, color.b, 255u);
     // const auto& it =
     // semantic_config_.color_to_semantic_label_map_.find(color_a); if (it !=
     // semantic_config_.color_to_semantic_label_map_.end()) {
     semantic_labels[i] =
-        semantic_config_.color_to_semantic_label_map_.at(color_a);
+        semantic_config_.color_to_semantic_label_map_.at(
+          hash_colors.at(i));
     //} else {
     //  LOG(ERROR) << "Caught an unknown color: \n"
     //             << "RGB: " << std::to_string(color_a.r) << ' '
@@ -141,7 +141,7 @@ void SemanticTsdfIntegrator::integratePointCloud(
   vxb::timing::Timer integrate_pcl_semantic_tsdf_timer(
       "semantic_tsdf/integrate");
   integratePointCloud(
-      T_G_C, points_C, colors, semantic_labels, freespace_points);
+      T_G_C, points_C, hash_colors, semantic_labels, freespace_points);
   integrate_pcl_semantic_tsdf_timer.Stop();
 }
 
@@ -154,6 +154,7 @@ void SemanticTsdfIntegrator::integratePointCloud(
   CHECK_GE(points_C.size(), 0u);
   CHECK_EQ(points_C.size(), colors.size());
   CHECK_EQ(points_C.size(), semantic_labels.size());
+  vxb::timing::Timer integrate_timer("integrate/semantic_merged");
 
   // Pre-compute a list of unique voxels to end on.
   // Create a hashmap: VOXEL INDEX -> index in original cloud.
@@ -182,6 +183,8 @@ void SemanticTsdfIntegrator::integratePointCloud(
                 voxel_map,
                 clear_map);
 
+  vxb::timing::Timer clear_timer("integrate/clear");
+
   integrateRays(T_G_C,
                 points_C,
                 colors,
@@ -190,6 +193,10 @@ void SemanticTsdfIntegrator::integratePointCloud(
                 true,
                 voxel_map,
                 clear_map);
+
+  clear_timer.Stop();
+
+  integrate_timer.Stop();
 }
 
 void SemanticTsdfIntegrator::integrateRays(
@@ -309,10 +316,9 @@ void SemanticTsdfIntegrator::integrateVoxel(
     const HashableColor& color = colors[pt_idx];
 
     const vxb::FloatingPoint& point_weight = getVoxelWeight(point_C);
-    // TODO(Toni) skip?
-    // if (point_weight < kEpsilon) {
-    //   continue;
-    // }
+    if (point_weight < vxb::kEpsilon) {
+      continue;
+    }
     merged_point_C = (merged_point_C * merged_weight + point_C * point_weight) /
                      (merged_weight + point_weight);
     merged_color = HashableColor::blendTwoColors(
@@ -397,9 +403,8 @@ void SemanticTsdfIntegrator::updateSemanticVoxel(
     std::lock_guard<std::mutex> lock(mutexes_.get(global_voxel_idx));
     ////// Here is the actual logic of Kimera-Semantics:   /////////////////////
     // Calculate new probabilities given the measurement frequencies.
-    updateSemanticVoxelProbabilities(
-          measurement_frequencies,
-          &semantic_voxel->semantic_priors);
+    updateSemanticVoxelProbabilities(measurement_frequencies,
+                                     &semantic_voxel->semantic_priors);
 
     // Get MLE semantic label.
     calculateMaximumLikelihoodLabel(semantic_voxel->semantic_priors,
@@ -408,6 +413,24 @@ void SemanticTsdfIntegrator::updateSemanticVoxel(
     // Colorize according to current MLE semantic label.
     updateSemanticVoxelColor(semantic_voxel->semantic_label,
                              &semantic_voxel->color);
+
+    // Actually hack the color of the TSDF voxel so we do not need to change a
+    // single line for the meshing with respect to Voxblox.
+    static const ColorMode color_mode = ColorMode::kSemanticProbability;
+    switch (color_mode) {
+    case ColorMode::kSemantic:
+      tsdf_voxel->color = semantic_voxel->color;
+      break;
+    case ColorMode::kSemanticProbability:
+      // TODO(Toni): Might be a bit expensive to calc all these exponentials...
+      tsdf_voxel->color = vxb::rainbowColorMap(std::exp(
+                                              semantic_voxel->semantic_priors[
+                                              semantic_voxel->semantic_label]));
+      break;
+    default:
+      LOG(ERROR) << "Error :*)";
+      break;
+    }
     ////////////////////////////////////////////////////////////////////////////
   }
 }

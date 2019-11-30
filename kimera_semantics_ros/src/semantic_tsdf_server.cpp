@@ -71,15 +71,6 @@ SemanticTsdfServer::SemanticTsdfServer(
                                  semantic_config_,
                                  semantic_layer_.get(),
                                  tsdf_map_->getTsdfLayerPtr()));
-  // Replace the Mesh integrator by the SemanticMeshIntegrator
-  semantic_mesh_config_.semantic_label_color_map =
-      semantic_label_to_color_.semantic_label_to_color_;
-  mesh_integrator_.reset(
-      new SemanticMeshIntegrator(mesh_config,
-                                 semantic_mesh_config_,
-                                 tsdf_map_->getTsdfLayerPtr(),
-                                 semantic_layer_.get(),
-                                 mesh_layer_.get()));
 }
 
 std::string SemanticTsdfServer::getSemanticLabelToColorCsvFilepathFromRosParam(

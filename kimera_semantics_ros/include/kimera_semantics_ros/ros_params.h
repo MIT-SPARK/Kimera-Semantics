@@ -26,14 +26,6 @@ getSemanticTsdfIntegratorConfigFromRosParam(const ros::NodeHandle& nh_private) {
   semantic_config.semantic_measurement_probability_ =
       static_cast<SemanticProbability>(semantic_measurement_probability);
 
-  double semantic_truncation_distance_factor =
-      semantic_config.semantic_truncation_distance_factor_;
-  nh_private.param("semantic_truncation_distance_factor",
-                   semantic_truncation_distance_factor,
-                   semantic_truncation_distance_factor);
-  semantic_config.semantic_truncation_distance_factor_ =
-      static_cast<vxb::FloatingPoint>(semantic_truncation_distance_factor);
-
   return semantic_config;
 }
 
@@ -42,14 +34,27 @@ getSemanticMeshConfigFromRosParam(const ros::NodeHandle& nh_private) {
   SemanticMeshIntegrator::SemanticMeshConfig semantic_mesh_config;
 
   double min_probability = semantic_mesh_config.min_probability;
-  nh_private.param(
-      "semantic_mesh_min_probability", min_probability, min_probability);
+  nh_private.param("semantic_mesh_min_probability",
+                   min_probability,
+                   min_probability);
   semantic_mesh_config.min_probability =
       static_cast<SemanticProbability>(min_probability);
 
-  // nh_private.param("semantic_mesh_color_mode",
-  //                 semantic_mesh_config.color_mode,
-  //                 semantic_mesh_config.color_mode);
+  std::string semantic_color_mode = "semantic";
+  nh_private.param("semantic_mesh_color_mode",
+                   semantic_color_mode,
+                   semantic_color_mode);
+  if (semantic_color_mode == "semantic") {
+    semantic_mesh_config.color_mode =
+        SemanticMeshIntegrator::ColorMode::kSemantic;
+  } else if (semantic_color_mode == "semantic_probability") {
+    semantic_mesh_config.color_mode =
+        SemanticMeshIntegrator::ColorMode::kSemanticProbability;
+  } else {
+    ROS_FATAL_STREAM("Undefined semantic mesh coloring mode: "
+                     << semantic_color_mode);
+    ros::shutdown();
+  }
 
   return semantic_mesh_config;
 }

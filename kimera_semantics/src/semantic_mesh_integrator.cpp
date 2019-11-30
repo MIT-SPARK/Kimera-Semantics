@@ -101,12 +101,7 @@ SemanticMeshIntegrator::SemanticMeshIntegrator(
 /// Generates mesh from the tsdf and semantic layer.
 void SemanticMeshIntegrator::generateMesh(bool only_mesh_updated_blocks,
                                           bool clear_updated_flag) {
-  CHECK(!clear_updated_flag || ((sdf_layer_mutable_ != nullptr) &&
-                                (semantic_layer_mutable_ != nullptr)))
-      << "If you would like to modify the updated flag in the blocks, please "
-      << "use the constructor that provides a non-const link to the sdf "
-      << "layer!";
-
+  LOG(ERROR) << "DERIVED GENERATE MESH";
   vxb::BlockIndexList all_tsdf_blocks;
   vxb::BlockIndexList all_semantic_blocks;
   if (only_mesh_updated_blocks) {
@@ -116,6 +111,8 @@ void SemanticMeshIntegrator::generateMesh(bool only_mesh_updated_blocks,
     sdf_layer_const_->getAllAllocatedBlocks(&all_tsdf_blocks);
     semantic_layer_const_->getAllAllocatedBlocks(&all_semantic_blocks);
   }
+  LOG(ERROR) << "ALL SEMANTIC size: " << all_semantic_blocks.size();
+  LOG(ERROR) << "ALL tsdf size: " << all_tsdf_blocks.size();
   all_tsdf_blocks.insert(all_tsdf_blocks.end(), all_semantic_blocks.begin(), all_semantic_blocks.end());
 
   // Allocate all the mesh memory
@@ -225,16 +222,17 @@ void SemanticMeshIntegrator::getColorUsingColorMode(
     vxb::Color* color) {
   CHECK_NOTNULL(color);
   switch (color_mode) {
+    case ColorMode::kSemantic:
+      *color = semantic_voxel.color;
+      break;
     case ColorMode::kSemanticProbability:
       // TODO(Toni): Might be a bit expensive to calc all these exponentials...
-      *color = vxb::rainbowColorMap(std::exp(
+      *color = vxb::grayColorMap(std::exp(
           semantic_voxel.semantic_priors[semantic_voxel.semantic_label]));
       break;
-    case ColorMode::kSemantic:
-      *color = semantic_mesh_config_.semantic_label_color_map.at(
-          semantic_voxel.semantic_label);
-      break;
     default:
+      LOG_FIRST_N(ERROR, 1) << "Unknown color mode for mesh. Using kSemantic by"
+                               " default.";
       *color = semantic_mesh_config_.semantic_label_color_map.at(
             semantic_voxel.semantic_label);
       break;

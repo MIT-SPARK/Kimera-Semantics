@@ -70,17 +70,13 @@ class SemanticTsdfIntegrator : public vxb::MergedTsdfIntegrator {
   struct SemanticConfig {
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-    // Factor which we multiply the default_truncation_distance of
-    // the TSDF layer.
-    vxb::FloatingPoint semantic_truncation_distance_factor_ = 1.0;
-
     // Likelihood probability of observing a measurement given that the prior
     // semantic label is the same as the measurement.
     // This number has to be a valid probability between 0 and 1.
     // Our current model derives the likelihood of observing a semantic label
     // for a voxel with a currently different label match as:
     // probability of non-match = 1 - measurement_probability_.
-    SemanticProbability semantic_measurement_probability_ = 0.9;
+    SemanticProbability semantic_measurement_probability_ = 0.9f;
 
     SemanticLabelToColorMap semantic_label_color_map_ =
         getRandomSemanticLabelToColorMap();
@@ -90,14 +86,18 @@ class SemanticTsdfIntegrator : public vxb::MergedTsdfIntegrator {
     // you integrate have associated label ids. It is just for the case where
     // you use its colors as ids.
     ColorToSemanticLabelMap color_to_semantic_label_map_;
-
-    std::string print() const;
   };
 
   SemanticTsdfIntegrator(const Config& config,
                          const SemanticConfig& semantic_config,
                          vxb::Layer<SemanticVoxel>* semantic_layer,
                          vxb::Layer<vxb::TsdfVoxel>* tsdf_layer);
+  virtual ~SemanticTsdfIntegrator() = default;
+
+  virtual void integratePointCloud(const vxb::Transformation& T_G_C,
+                                   const vxb::Pointcloud& points_C,
+                                   const vxb::Colors& colors,
+                                   const bool freespace_points = false) override;
 
   // Use if you don't have labels, but the info is encoded in colors.
   // Otw, use integratePointCloud directly with semantic labels.
