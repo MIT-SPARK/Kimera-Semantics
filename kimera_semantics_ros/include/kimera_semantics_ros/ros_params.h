@@ -18,6 +18,7 @@ inline SemanticTsdfIntegrator::SemanticConfig
 getSemanticTsdfIntegratorConfigFromRosParam(const ros::NodeHandle& nh_private) {
   SemanticTsdfIntegrator::SemanticConfig semantic_config;
 
+  // Get semantic meas prob
   double semantic_measurement_probability =
       semantic_config.semantic_measurement_probability_;
   nh_private.param("semantic_measurement_probability",
@@ -26,37 +27,20 @@ getSemanticTsdfIntegratorConfigFromRosParam(const ros::NodeHandle& nh_private) {
   semantic_config.semantic_measurement_probability_ =
       static_cast<SemanticProbability>(semantic_measurement_probability);
 
-  return semantic_config;
-}
-
-inline SemanticMeshIntegrator::SemanticMeshConfig
-getSemanticMeshConfigFromRosParam(const ros::NodeHandle& nh_private) {
-  SemanticMeshIntegrator::SemanticMeshConfig semantic_mesh_config;
-
-  double min_probability = semantic_mesh_config.min_probability;
-  nh_private.param("semantic_mesh_min_probability",
-                   min_probability,
-                   min_probability);
-  semantic_mesh_config.min_probability =
-      static_cast<SemanticProbability>(min_probability);
-
-  std::string semantic_color_mode = "semantic";
-  nh_private.param("semantic_mesh_color_mode",
-                   semantic_color_mode,
-                   semantic_color_mode);
-  if (semantic_color_mode == "semantic") {
-    semantic_mesh_config.color_mode =
-        SemanticMeshIntegrator::ColorMode::kSemantic;
-  } else if (semantic_color_mode == "semantic_probability") {
-    semantic_mesh_config.color_mode =
-        SemanticMeshIntegrator::ColorMode::kSemanticProbability;
+  // Get semantic color mode
+  std::string color_mode = "color";
+  nh_private.param("semantic_color_mode", color_mode, color_mode);
+  if (color_mode == "color") {
+    semantic_config.color_mode = ColorMode::kColor;
+  } else if (color_mode == "semantic") {
+    semantic_config.color_mode = ColorMode::kSemantic;
+  } else if (color_mode == "semantic_probability") {
+    semantic_config.color_mode = ColorMode::kSemanticProbability;
   } else {
-    ROS_FATAL_STREAM("Undefined semantic mesh coloring mode: "
-                     << semantic_color_mode);
-    ros::shutdown();
+    LOG(FATAL) << "Unknown semantic color mode: " << color_mode;
   }
 
-  return semantic_mesh_config;
+  return semantic_config;
 }
 
 }  // namespace kimera

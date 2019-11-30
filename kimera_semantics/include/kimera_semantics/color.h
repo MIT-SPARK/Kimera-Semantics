@@ -47,7 +47,7 @@ class SemanticLabel2Color {
 
   // Make these public if someone wants to access them directly.
   ColorToSemanticLabelMap color_to_semantic_label_;
-  SemanticLabelToColorMap semantic_label_to_color_;
+  SemanticLabelToColorMap semantic_label_to_color_map_;
 };
 
 // Color map from semantic labels to colors.

@@ -55,17 +55,18 @@ SemanticTsdfServer::SemanticTsdfServer(
     const vxb::MeshIntegratorConfig& mesh_config)
     : vxb::TsdfServer(nh, nh_private, config, integrator_config, mesh_config),
       semantic_config_(getSemanticTsdfIntegratorConfigFromRosParam(nh_private)),
-      semantic_mesh_config_(getSemanticMeshConfigFromRosParam(nh_private)),
       semantic_layer_(nullptr),
       semantic_label_to_color_(
           getSemanticLabelToColorCsvFilepathFromRosParam(nh_private)) {
+  /// Semantic layer
   semantic_layer_.reset(new vxb::Layer<SemanticVoxel>(
       config.tsdf_voxel_size, config.tsdf_voxels_per_side));
-  // Replace the TSDF integrator by the SemanticTsdfIntegrator
+  /// Semantic configuration
   semantic_config_.semantic_label_color_map_ =
-      semantic_label_to_color_.semantic_label_to_color_;
+      semantic_label_to_color_.semantic_label_to_color_map_;
   semantic_config_.color_to_semantic_label_map_ =
       semantic_label_to_color_.color_to_semantic_label_;
+  /// Replace the TSDF integrator by the SemanticTsdfIntegrator
   tsdf_integrator_.reset(
       new SemanticTsdfIntegrator(integrator_config,
                                  semantic_config_,

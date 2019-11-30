@@ -66,7 +66,6 @@ class SemanticTsdfServer : public vxb::TsdfServer {
 
   // Configs.
   SemanticTsdfIntegrator::SemanticConfig semantic_config_;
-  SemanticMeshIntegrator::SemanticMeshConfig semantic_mesh_config_;
 
   // Layers.
   std::unique_ptr<vxb::Layer<SemanticVoxel>> semantic_layer_;

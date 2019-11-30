@@ -54,6 +54,12 @@
 
 namespace kimera {
 
+enum class ColorMode {
+  kColor = 0,
+  kSemantic = 1,
+  kSemanticProbability = 2,
+};
+
 /**
  * Semantic TSDF integrator.
  * Uses ray bundling to improve integration speed, points which lie in the same
@@ -77,6 +83,9 @@ class SemanticTsdfIntegrator : public vxb::MergedTsdfIntegrator {
     // for a voxel with a currently different label match as:
     // probability of non-match = 1 - measurement_probability_.
     SemanticProbability semantic_measurement_probability_ = 0.9f;
+
+    /// How to color the mesh.
+    ColorMode color_mode = ColorMode::kSemantic;
 
     SemanticLabelToColorMap semantic_label_color_map_ =
         getRandomSemanticLabelToColorMap();

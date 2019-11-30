@@ -53,13 +53,6 @@
 
 namespace kimera {
 
-enum class ColorMode {
-  kColor = 0,
-  kNormals = 1,
-  kSemantic = 2,
-  kSemanticProbability = 3,
-};
-
 SemanticTsdfIntegrator::SemanticTsdfIntegrator(
     const Config& config,
     const SemanticConfig& semantic_config,
@@ -393,14 +386,19 @@ void SemanticTsdfIntegrator::updateSemanticVoxel(
   DCHECK(tsdf_voxel != nullptr);
   DCHECK(semantic_voxel != nullptr);
 
+  // TODO(Toni): ideally, only lock once in updateTsdfVoxel, but we need to
+  // modify Voxblox for that.
+  // Lookup the mutex that is responsible for this voxel and lock it
+  std::lock_guard<std::mutex> lock(mutexes_.get(global_voxel_idx));
+
+  // TODO(Toni): ideally, return new_sdf from updateTsdfVoxel, but we need to
+  // modify Voxblox for that.
   // Similar to color blending in Voxblox tsdf_integrator.cc,
-  // we perform semantic inference only if close to the surface:
   // Quoting Voxblox:
   // color blending is expensive only do it close to the surface
   //  if (std::abs(sdf) < config_.default_truncation_distance) {
-  if (std::abs(tsdf_voxel->distance) < config_.default_truncation_distance) {
-    // Lookup the mutex that is responsible for this voxel and lock it
-    std::lock_guard<std::mutex> lock(mutexes_.get(global_voxel_idx));
+  // Do the same for semantic updates:
+  // Don't do it bcs of copyrights... :'(
     ////// Here is the actual logic of Kimera-Semantics:   /////////////////////
     // Calculate new probabilities given the measurement frequencies.
     updateSemanticVoxelProbabilities(measurement_frequencies,
@@ -414,25 +412,29 @@ void SemanticTsdfIntegrator::updateSemanticVoxel(
     updateSemanticVoxelColor(semantic_voxel->semantic_label,
                              &semantic_voxel->color);
 
-    // Actually hack the color of the TSDF voxel so we do not need to change a
+    // Actually change the color of the TSDF voxel so we do not need to change a
     // single line for the meshing with respect to Voxblox.
-    static const ColorMode color_mode = ColorMode::kSemanticProbability;
-    switch (color_mode) {
+    switch (semantic_config_.color_mode) {
+    case ColorMode::kColor:
+      // Nothing, base class colors the tsdf voxel for us.
+      break;
     case ColorMode::kSemantic:
       tsdf_voxel->color = semantic_voxel->color;
       break;
     case ColorMode::kSemanticProbability:
       // TODO(Toni): Might be a bit expensive to calc all these exponentials...
-      tsdf_voxel->color = vxb::rainbowColorMap(std::exp(
-                                              semantic_voxel->semantic_priors[
-                                              semantic_voxel->semantic_label]));
+      tsdf_voxel->color = vxb::rainbowColorMap(
+            std::exp(semantic_voxel->semantic_priors[
+                     semantic_voxel->semantic_label]));
       break;
     default:
-      LOG(ERROR) << "Error :*)";
+      LOG(FATAL) << "Unknown semantic color mode: "
+                 << static_cast<std::underlying_type<ColorMode>::type>(
+                      semantic_config_.color_mode);
       break;
     }
     ////////////////////////////////////////////////////////////////////////////
-  }
+  //}
 }
 
 // Will return a pointer to a voxel located at global_voxel_idx in the tsdf

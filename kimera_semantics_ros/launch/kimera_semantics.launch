@@ -76,9 +76,9 @@
     <param name="tsdf_voxels_per_side"      value="32" />
     <param name="max_ray_length_m"          value="15.0" />
     <param name="min_time_between_msgs_sec" value="0.2" />
-    <param name="voxel_carving_enabled"     value="true" />
     <param name="voxel_carving_enabled"     value="false" />
     <param name="color_mode"                value="lambert_color"/>
+    <param name="semantic_color_mode"              value="semantic"/>
     <param name="use_const_weight"          value="false" />
     <!-- irrelevant param if using semantic tsdf server:
     it will use merged anyway... -->
@@ -92,7 +92,6 @@
 
     <param name="verbose"                   value="true" />
 
-    <param name="semantic_mesh_color_mode"              value="semantic_probability"/>
     <param name="semantic_measurement_probability" value="0.55" />
 
     <!-- Is this needed? -->
