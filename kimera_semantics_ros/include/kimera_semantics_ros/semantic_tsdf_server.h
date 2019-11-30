@@ -40,7 +40,6 @@
 #include <voxblox_ros/ros_params.h>
 #include <voxblox_ros/tsdf_server.h>
 
-#include "kimera_semantics/semantic_mesh_integrator.h"
 #include "kimera_semantics/semantic_tsdf_integrator.h"
 #include "kimera_semantics/semantic_voxel.h"
 #include "kimera_semantics_ros/ros_params.h"

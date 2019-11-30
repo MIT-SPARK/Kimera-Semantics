@@ -9,7 +9,6 @@
 #include <ros/ros.h>
 
 #include "kimera_semantics/common.h"
-#include "kimera_semantics/semantic_mesh_integrator.h"
 #include "kimera_semantics/semantic_tsdf_integrator.h"
 
 namespace kimera {

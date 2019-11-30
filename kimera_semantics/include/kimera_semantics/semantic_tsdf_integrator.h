@@ -84,7 +84,7 @@ class SemanticTsdfIntegrator : public vxb::MergedTsdfIntegrator {
     // probability of non-match = 1 - measurement_probability_.
     SemanticProbability semantic_measurement_probability_ = 0.9f;
 
-    /// How to color the mesh.
+    /// How to color the semantic mesh.
     ColorMode color_mode = ColorMode::kSemantic;
 
     SemanticLabelToColorMap semantic_label_color_map_ =
