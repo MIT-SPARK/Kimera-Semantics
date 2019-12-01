@@ -9,24 +9,24 @@
 #include <ros/ros.h>
 
 #include "kimera_semantics/common.h"
-#include "kimera_semantics/semantic_tsdf_integrator.h"
+#include "kimera_semantics/semantic_integrator_base.h"
 
 namespace kimera {
 
 inline std::string
 getSemanticTsdfIntegratorTypeFromRosParam(const ros::NodeHandle& nh_private) {
-  // Get semantic tsdf integrator type, by default using "fast".
-  std::string semantic_tsdf_integrator_type =
-      kSemanticTsdfIntegratorTypeNames[0];
+  // Get semantic tsdf integrator type, by default using "fast"
+  // (could be "merged").
+  std::string semantic_tsdf_integrator_type = "fast";
   nh_private.param("semantic_tsdf_integrator_type",
                    semantic_tsdf_integrator_type,
                    semantic_tsdf_integrator_type);
   return semantic_tsdf_integrator_type;
 }
 
-inline MergedSemanticTsdfIntegrator::SemanticConfig
+inline SemanticIntegratorBase::SemanticConfig
 getSemanticTsdfIntegratorConfigFromRosParam(const ros::NodeHandle& nh_private) {
-  MergedSemanticTsdfIntegrator::SemanticConfig semantic_config;
+  SemanticIntegratorBase::SemanticConfig semantic_config;
 
   // Get semantic meas prob
   double semantic_measurement_probability =

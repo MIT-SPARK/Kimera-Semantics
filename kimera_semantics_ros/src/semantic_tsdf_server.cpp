@@ -36,6 +36,11 @@
 
 #include "kimera_semantics_ros/semantic_tsdf_server.h"
 
+#include <voxblox_ros/ros_params.h>
+#include "kimera_semantics_ros/ros_params.h"
+
+#include "kimera_semantics/semantic_tsdf_integrator_factory.h"
+
 namespace kimera {
 
 SemanticTsdfServer::SemanticTsdfServer(const ros::NodeHandle& nh,

@@ -6,9 +6,9 @@
 
 #pragma once
 
+#include <voxblox/core/block_hash.h>
 #include <voxblox/core/common.h>
 #include <voxblox/utils/approx_hash_array.h>
-#include <voxblox/core/block_hash.h>
 
 namespace kimera {
 
