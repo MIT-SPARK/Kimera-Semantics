@@ -7,9 +7,12 @@
 ## Release News
 
 - **Dec 1st 2019:** Kimera-Semantics got a complete revamp:
-  - New `fast` method: an order of magnitude faster (approx 1s before, 0.1s now) than using `merged`, with minimal accuracy loss for small voxels (it leverages Voxblox' fast approach):
-  you can play with both methods by changing the parameter `semantic_tsdf_integrator_type` in the [launch file](./kimera_semantics_ros/launch/kimera_semantics.launch).
   - Leaner code: no more code dedicated to meshing, we fully re-use Voxblox/OpenChisel instead.
+  - New `fast` method: an order of magnitude faster (took approx 1s before, 0.1s now) than using `merged`, with minimal accuracy loss for small voxels (it leverages Voxblox' fast approach):
+  you can play with both methods by changing the parameter `semantic_tsdf_integrator_type` in the [launch file](./kimera_semantics_ros/launch/kimera_semantics.launch).
+<div align="center">
+    <img src="kimera/docs/media/fast_vs_merged_kimera_semantics.gif">
+</div>
 
 ## Publications
 
