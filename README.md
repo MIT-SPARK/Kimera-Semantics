@@ -4,6 +4,13 @@
     <img src="kimera/docs/media/kimera_semantics.gif">
 </div>
 
+## Release News
+
+- **Dec 1st 2019:** Kimera-Semantics got a complete revamp:
+  - New `fast` method: an order of magnitude faster (approx 1s before, 0.1s now) than using `merged`, with minimal accuracy loss for small voxels (it leverages Voxblox' fast approach):
+  you can play with both methods by changing the parameter `semantic_tsdf_integrator_type` in the [launch file](./kimera_semantics_ros/launch/kimera_semantic.launch).
+  - Leaner code: no more code dedicated to meshing, we fully re-use Voxblox/OpenChisel instead.
+
 ## Publications
 
 We kindly ask to cite our paper if you find this library useful:
@@ -24,11 +31,16 @@ We kindly ask to cite our paper if you find this library useful:
 
 ### Related publications
 
-Our work is built using Voxblox, an amazing framework to build your own 3D voxelized world:
+Our work is built using [Voxblox](https://github.com/ethz-asl/voxblox), an amazing framework to build your own 3D voxelized world:
 
 - Helen Oleynikova, Zachary Taylor, Marius Fehr, Juan Nieto, and Roland Siegwart, [**Voxblox: Incremental 3D Euclidean Signed Distance Fields for On-Board MAV Planning**](https://github.com/ethz-asl/voxblox), in IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS), 2016.
 
-A related work to ours is Voxblox++ which also uses Voxblox for geometric and instance-aware segmentation, differently from our dense scene segmentation, check it out as well!:
+Which was originally inspired by [OpenChisel](https://github.com/personalrobotics/OpenChisel):
+
+- Matthew Klingensmith, Ivan Dryanovski, Siddhartha Srinivasa, and Jizhong Xiao, [**Chisel: Real Time Large Scale 3D Reconstruction Onboard a Mobile Device using Spatially Hashed Signed Distance Fields.**](http://www.roboticsproceedings.org/rss11/p40.pdf). Robotics: science and systems (RSS), 2015.
+
+A related work to ours is [Voxblox++](https://github.com/ethz-asl/voxblox-plusplus) which also uses Voxblox for geometric and instance-aware segmentation, differently from our dense scene segmentation, check it out as well!:
+
 - Margarita Grinvald, Fadri Furrer, Tonci Novkovic, Jen Jen Chung, Cesar Cadena, Roland Siegwart, and Juan Nieto, [**Volumetric Instance-Aware Semantic Mapping and 3D Object Discovery**](https://github.com/ethz-asl/voxblox-plusplus), in IEEE Robotics and Automation Letters, July 2019.
 
 # 1. Installation
