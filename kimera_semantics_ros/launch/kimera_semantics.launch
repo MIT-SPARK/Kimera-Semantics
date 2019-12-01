@@ -78,11 +78,7 @@
     <param name="min_time_between_msgs_sec" value="0.2" />
     <param name="voxel_carving_enabled"     value="false" />
     <param name="color_mode"                value="lambert_color"/>
-    <param name="semantic_color_mode"              value="semantic"/>
     <param name="use_const_weight"          value="false" />
-    <!-- irrelevant param if using semantic tsdf server:
-    it will use merged anyway... -->
-    <param name="method"                    value="fast" />
 
     <param name="sensor_frame"              value="$(arg sensor_frame)"/>
     <param name="use_tf_transforms"         value="true" />
@@ -92,6 +88,8 @@
 
     <param name="verbose"                   value="true" />
 
+    <param name="semantic_tsdf_integrator_type"    value="fast" />
+    <param name="semantic_color_mode"              value="semantic"/>
     <param name="semantic_measurement_probability" value="0.55" />
 
     <!-- Is this needed? -->

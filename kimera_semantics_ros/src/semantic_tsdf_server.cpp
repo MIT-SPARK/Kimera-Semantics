@@ -67,11 +67,14 @@ SemanticTsdfServer::SemanticTsdfServer(
   semantic_config_.color_to_semantic_label_map_ =
       semantic_label_to_color_.color_to_semantic_label_;
   /// Replace the TSDF integrator by the SemanticTsdfIntegrator
-  tsdf_integrator_.reset(
-      new SemanticTsdfIntegrator(integrator_config,
-                                 semantic_config_,
-                                 semantic_layer_.get(),
-                                 tsdf_map_->getTsdfLayerPtr()));
+  tsdf_integrator_ =
+      SemanticTsdfIntegratorFactory::create(
+        getSemanticTsdfIntegratorTypeFromRosParam(nh_private),
+        integrator_config,
+        semantic_config_,
+        tsdf_map_->getTsdfLayerPtr(),
+        semantic_layer_.get());
+  CHECK(tsdf_integrator_);
 }
 
 std::string SemanticTsdfServer::getSemanticLabelToColorCsvFilepathFromRosParam(

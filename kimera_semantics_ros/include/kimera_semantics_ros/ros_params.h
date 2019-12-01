@@ -13,9 +13,20 @@
 
 namespace kimera {
 
-inline SemanticTsdfIntegrator::SemanticConfig
+inline std::string
+getSemanticTsdfIntegratorTypeFromRosParam(const ros::NodeHandle& nh_private) {
+  // Get semantic tsdf integrator type, by default using "fast".
+  std::string semantic_tsdf_integrator_type =
+      kSemanticTsdfIntegratorTypeNames[0];
+  nh_private.param("semantic_tsdf_integrator_type",
+                   semantic_tsdf_integrator_type,
+                   semantic_tsdf_integrator_type);
+  return semantic_tsdf_integrator_type;
+}
+
+inline MergedSemanticTsdfIntegrator::SemanticConfig
 getSemanticTsdfIntegratorConfigFromRosParam(const ros::NodeHandle& nh_private) {
-  SemanticTsdfIntegrator::SemanticConfig semantic_config;
+  MergedSemanticTsdfIntegrator::SemanticConfig semantic_config;
 
   // Get semantic meas prob
   double semantic_measurement_probability =

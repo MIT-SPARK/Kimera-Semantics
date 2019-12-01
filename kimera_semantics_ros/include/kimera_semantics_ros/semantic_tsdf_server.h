@@ -64,7 +64,7 @@ class SemanticTsdfServer : public vxb::TsdfServer {
       const ros::NodeHandle& nh);
 
   // Configs.
-  SemanticTsdfIntegrator::SemanticConfig semantic_config_;
+  MergedSemanticTsdfIntegrator::SemanticConfig semantic_config_;
 
   // Layers.
   std::unique_ptr<vxb::Layer<SemanticVoxel>> semantic_layer_;

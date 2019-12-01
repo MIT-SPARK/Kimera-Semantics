@@ -53,19 +53,47 @@
 
 namespace kimera {
 
-SemanticTsdfIntegrator::SemanticTsdfIntegrator(
-    const Config& config,
+SemanticIntegratorBase::SemanticIntegratorBase(
     const SemanticConfig& semantic_config,
-    vxb::Layer<SemanticVoxel>* semantic_layer,
-    vxb::Layer<vxb::TsdfVoxel>* tsdf_layer)
-    : MergedTsdfIntegrator(config, CHECK_NOTNULL(tsdf_layer)),
-      semantic_config_(semantic_config),
-      semantic_log_likelihood_(),
-      semantic_layer_(CHECK_NOTNULL(semantic_layer)) {
+    vxb::Layer<SemanticVoxel>* semantic_layer)
+  : semantic_config_(semantic_config),
+    semantic_layer_(nullptr),
+    temp_semantic_block_mutex_(),
+    temp_semantic_block_map_(),
+    log_match_probability_(),
+    log_non_match_probability_(),
+    semantic_log_likelihood_(),
+    semantic_voxel_size_(),
+    semantic_voxels_per_side_(),
+    semantic_block_size_(),
+    semantic_voxel_size_inv_(),
+    semantic_voxels_per_side_inv_(),
+    semantic_block_size_inv_() {
+  setSemanticLayer(semantic_layer);
+  CHECK_NOTNULL(semantic_layer_);
+  setSemanticProbabilities();
+}
+
+void SemanticIntegratorBase::setSemanticLayer(
+    vxb::Layer<SemanticVoxel>* semantic_layer) {
+  CHECK_NOTNULL(semantic_layer);
+
+  semantic_layer_ = semantic_layer;
+
+  semantic_voxel_size_ = semantic_layer_->voxel_size();
+  semantic_block_size_ = semantic_layer_->block_size();
+  semantic_voxels_per_side_ = semantic_layer_->voxels_per_side();
+
+  semantic_voxel_size_inv_ = 1.0 / semantic_voxel_size_;
+  semantic_block_size_inv_ = 1.0 / semantic_block_size_;
+  semantic_voxels_per_side_inv_ = 1.0 / semantic_voxels_per_side_;
+}
+
+void SemanticIntegratorBase::setSemanticProbabilities() {
   SemanticProbability match_probability =
-      semantic_config.semantic_measurement_probability_;
+      semantic_config_.semantic_measurement_probability_;
   SemanticProbability non_match_probability =
-      1.0f - semantic_config.semantic_measurement_probability_;
+      1.0f - semantic_config_.semantic_measurement_probability_;
   CHECK_GT(match_probability, 0.0);
   CHECK_GT(non_match_probability, 0.0);
   CHECK_LT(match_probability, 1.0);
@@ -85,21 +113,28 @@ SemanticTsdfIntegrator::SemanticTsdfIntegrator(
              kTotalNumberOfLabels * log_match_probability_,
              100 * vxb::kFloatEpsilon);
   CHECK_NEAR(
-      semantic_log_likelihood_.sum(),
-      kTotalNumberOfLabels * log_match_probability_ +
-          std::pow(kTotalNumberOfLabels, 2) * log_non_match_probability_ -
-          kTotalNumberOfLabels * log_non_match_probability_,
-      1000 * vxb::kFloatEpsilon);
+        semantic_log_likelihood_.sum(),
+        kTotalNumberOfLabels * log_match_probability_ +
+        std::pow(kTotalNumberOfLabels, 2) * log_non_match_probability_ -
+        kTotalNumberOfLabels * log_non_match_probability_,
+        1000 * vxb::kFloatEpsilon);
 }
+
+MergedSemanticTsdfIntegrator::MergedSemanticTsdfIntegrator(
+    const Config& config,
+    const SemanticConfig& semantic_config,
+    vxb::Layer<vxb::TsdfVoxel>* tsdf_layer,
+    vxb::Layer<SemanticVoxel>* semantic_layer)
+    : MergedTsdfIntegrator(config, CHECK_NOTNULL(tsdf_layer)),
+      SemanticIntegratorBase(semantic_config, CHECK_NOTNULL(semantic_layer)) {}
 
 // Use if you don't have labels, but the info is encoded in colors.
 // Otw, use integratePointCloud directly with semantic labels.
-void SemanticTsdfIntegrator::integratePointCloud(
+void MergedSemanticTsdfIntegrator::integratePointCloud(
     const vxb::Transformation& T_G_C,
     const vxb::Pointcloud& points_C,
     const vxb::Colors& colors,
     const bool freespace_points) {
-  LOG(ERROR) << "INTEGRATE POINTCLOUD DERIVED";
   HashableColors hash_colors(colors.size());
   SemanticLabels semantic_labels(colors.size());
   // TODO(Toni): parallelize with openmp
@@ -138,7 +173,7 @@ void SemanticTsdfIntegrator::integratePointCloud(
   integrate_pcl_semantic_tsdf_timer.Stop();
 }
 
-void SemanticTsdfIntegrator::integratePointCloud(
+void MergedSemanticTsdfIntegrator::integratePointCloud(
     const vxb::Transformation& T_G_C,
     const vxb::Pointcloud& points_C,
     const HashableColors& colors,
@@ -192,7 +227,7 @@ void SemanticTsdfIntegrator::integratePointCloud(
   integrate_timer.Stop();
 }
 
-void SemanticTsdfIntegrator::integrateRays(
+void MergedSemanticTsdfIntegrator::integrateRays(
     const vxb::Transformation& T_G_C,
     const vxb::Pointcloud& points_C,
     const HashableColors& colors,
@@ -216,7 +251,7 @@ void SemanticTsdfIntegrator::integrateRays(
   } else {
     std::list<std::thread> integration_threads;
     for (size_t i = 0u; i < config_.integrator_threads; ++i) {
-      integration_threads.emplace_back(&SemanticTsdfIntegrator::integrateVoxels,
+      integration_threads.emplace_back(&MergedSemanticTsdfIntegrator::integrateVoxels,
                                        this,
                                        T_G_C,
                                        points_C,
@@ -241,7 +276,7 @@ void SemanticTsdfIntegrator::integrateRays(
 }
 
 // NEEDS TO BE THREAD-SAFE
-void SemanticTsdfIntegrator::integrateVoxels(
+void MergedSemanticTsdfIntegrator::integrateVoxels(
     const vxb::Transformation& T_G_C,
     const vxb::Pointcloud& points_C,
     const HashableColors& colors,
@@ -276,7 +311,7 @@ void SemanticTsdfIntegrator::integrateVoxels(
 }
 
 // HAS TO BE THREADSAFE!!!
-void SemanticTsdfIntegrator::integrateVoxel(
+void MergedSemanticTsdfIntegrator::integrateVoxel(
     const vxb::Transformation& T_G_C,
     const vxb::Pointcloud& points_C,
     const HashableColors& colors,
@@ -366,6 +401,7 @@ void SemanticTsdfIntegrator::integrateVoxel(
         allocateStorageAndGetSemanticVoxelPtr(global_voxel_idx, &semantic_block, &semantic_block_idx);
     updateSemanticVoxel(global_voxel_idx,
                         semantic_label_frequencies,
+                        &mutexes_,
                         voxel,
                         semantic_voxel);
 
@@ -373,23 +409,25 @@ void SemanticTsdfIntegrator::integrateVoxel(
 }
 
 // TODO(Toni): Complete this function!!
-SemanticProbability SemanticTsdfIntegrator::computeMeasurementProbability(
+SemanticProbability SemanticIntegratorBase::computeMeasurementProbability(
     vxb::FloatingPoint ray_distance) {
   return 1.0;
 }
 
-void SemanticTsdfIntegrator::updateSemanticVoxel(
+void SemanticIntegratorBase::updateSemanticVoxel(
     const vxb::GlobalIndex& global_voxel_idx,
     const SemanticProbabilities& measurement_frequencies,
+    Mutexes* mutexes,
     vxb::TsdfVoxel* tsdf_voxel,
     SemanticVoxel* semantic_voxel) {
+  DCHECK(mutexes != nullptr);
   DCHECK(tsdf_voxel != nullptr);
   DCHECK(semantic_voxel != nullptr);
 
   // TODO(Toni): ideally, only lock once in updateTsdfVoxel, but we need to
   // modify Voxblox for that.
   // Lookup the mutex that is responsible for this voxel and lock it
-  std::lock_guard<std::mutex> lock(mutexes_.get(global_voxel_idx));
+  std::lock_guard<std::mutex> lock(mutexes->get(global_voxel_idx));
 
   // TODO(Toni): ideally, return new_sdf from updateTsdfVoxel, but we need to
   // modify Voxblox for that.
@@ -446,7 +484,7 @@ void SemanticTsdfIntegrator::updateSemanticVoxel(
 // mutex allowing it to grow during integration.
 // These temporary blocks can be merged into the layer later by calling
 // updateLayerWithStoredBlocks()
-SemanticVoxel* SemanticTsdfIntegrator::allocateStorageAndGetSemanticVoxelPtr(
+SemanticVoxel* SemanticIntegratorBase::allocateStorageAndGetSemanticVoxelPtr(
     const vxb::GlobalIndex& global_voxel_idx,
     vxb::Block<SemanticVoxel>::Ptr* last_block,
     vxb::BlockIndex* last_block_idx) {
@@ -454,7 +492,7 @@ SemanticVoxel* SemanticTsdfIntegrator::allocateStorageAndGetSemanticVoxelPtr(
   DCHECK(last_block_idx != nullptr);
 
   const vxb::BlockIndex& block_idx = vxb::getBlockIndexFromGlobalVoxelIndex(
-      global_voxel_idx, voxels_per_side_inv_);
+      global_voxel_idx, semantic_voxels_per_side_inv_);
 
   if ((block_idx != *last_block_idx) || (*last_block == nullptr)) {
     *last_block = semantic_layer_->getBlockPtrByIndex(block_idx);
@@ -476,8 +514,8 @@ SemanticVoxel* SemanticTsdfIntegrator::allocateStorageAndGetSemanticVoxelPtr(
       auto insert_status = temp_semantic_block_map_.emplace(
           block_idx,
           std::make_shared<vxb::Block<SemanticVoxel>>(
-              voxels_per_side_, voxel_size_,
-              vxb::getOriginPointFromGridIndex(block_idx, block_size_)));
+              semantic_voxels_per_side_, semantic_voxel_size_,
+              vxb::getOriginPointFromGridIndex(block_idx, semantic_block_size_)));
 
       DCHECK(insert_status.second) << "Block already exists when allocating at "
                                    << block_idx.transpose();
@@ -490,13 +528,13 @@ SemanticVoxel* SemanticTsdfIntegrator::allocateStorageAndGetSemanticVoxelPtr(
   (*last_block)->updated() = true;
 
   const vxb::VoxelIndex local_voxel_idx =
-      vxb::getLocalFromGlobalVoxelIndex(global_voxel_idx, voxels_per_side_);
+      vxb::getLocalFromGlobalVoxelIndex(global_voxel_idx, semantic_voxels_per_side_);
 
   return &((*last_block)->getVoxelByVoxelIndex(local_voxel_idx));
 }
 
 // NOT THREAD SAFE
-void SemanticTsdfIntegrator::updateSemanticLayerWithStoredBlocks() {
+void SemanticIntegratorBase::updateSemanticLayerWithStoredBlocks() {
   vxb::BlockIndex last_block_idx;
   vxb::Block<SemanticVoxel>::Ptr block = nullptr;
   for (const std::pair<const vxb::BlockIndex, vxb::Block<SemanticVoxel>::Ptr>&
@@ -522,7 +560,7 @@ void SemanticTsdfIntegrator::updateSemanticLayerWithStoredBlocks() {
  * if voxel is close to ground.
  **/
 // TODO(Toni): Unit Test this function!
-void SemanticTsdfIntegrator::updateSemanticVoxelProbabilities(
+void SemanticIntegratorBase::updateSemanticVoxelProbabilities(
     const SemanticProbabilities& measurement_frequencies,
     SemanticProbabilities* semantic_prior_probability) const {
   CHECK_NOTNULL(semantic_prior_probability);
@@ -556,7 +594,7 @@ void SemanticTsdfIntegrator::updateSemanticVoxelProbabilities(
 }
 
 // THREAD SAFE
-void SemanticTsdfIntegrator::normalizeProbabilities(
+void SemanticIntegratorBase::normalizeProbabilities(
     SemanticProbabilities* unnormalized_probs) const {
   CHECK_NOTNULL(unnormalized_probs);
   CHECK_GT(unnormalized_probs->size(), 0u);
@@ -591,7 +629,7 @@ void SemanticTsdfIntegrator::normalizeProbabilities(
 }
 
 // THREAD SAFE
-void SemanticTsdfIntegrator::calculateMaximumLikelihoodLabel(
+void SemanticIntegratorBase::calculateMaximumLikelihoodLabel(
     const SemanticProbabilities& semantic_posterior,
     SemanticLabel* semantic_label) const {
   CHECK_NOTNULL(semantic_label);
@@ -606,7 +644,7 @@ void SemanticTsdfIntegrator::calculateMaximumLikelihoodLabel(
 }
 
 // THREAD SAFE
-void SemanticTsdfIntegrator::updateSemanticVoxelColor(
+void SemanticIntegratorBase::updateSemanticVoxelColor(
     const SemanticLabel& semantic_label,
     HashableColor* semantic_voxel_color) const {
   CHECK_NOTNULL(semantic_voxel_color);
