@@ -563,13 +563,13 @@ void SemanticIntegratorBase::updateSemanticLayerWithStoredBlocks() {
 void SemanticIntegratorBase::updateSemanticVoxelProbabilities(
     const SemanticProbabilities& measurement_frequencies,
     SemanticProbabilities* semantic_prior_probability) const {
-  CHECK_NOTNULL(semantic_prior_probability);
-  CHECK_EQ(semantic_prior_probability->size(), kTotalNumberOfLabels);
-  CHECK_LE((*semantic_prior_probability)[0], 0.0);
-  CHECK(std::isfinite((*semantic_prior_probability)[0]));
-  CHECK(!semantic_prior_probability->hasNaN());
-  CHECK_EQ(measurement_frequencies.size(), kTotalNumberOfLabels);
-  CHECK_GE(measurement_frequencies.sum(), 1.0)
+  DCHECK(semantic_prior_probability != nullptr);
+  DCHECK_EQ(semantic_prior_probability->size(), kTotalNumberOfLabels);
+  DCHECK_LE((*semantic_prior_probability)[0], 0.0);
+  DCHECK(std::isfinite((*semantic_prior_probability)[0]));
+  DCHECK(!semantic_prior_probability->hasNaN());
+  DCHECK_EQ(measurement_frequencies.size(), kTotalNumberOfLabels);
+  DCHECK_GE(measurement_frequencies.sum(), 1.0)
       << "We should at least have one measurement when calling this "
          "function.";
 
@@ -585,7 +585,7 @@ void SemanticIntegratorBase::updateSemanticVoxelProbabilities(
   // Post_i = (likelihood * meas freqs)_i + prior_i;
   *semantic_prior_probability +=
       semantic_log_likelihood_ * measurement_frequencies;
-  CHECK(!semantic_prior_probability->hasNaN());
+  DCHECK(!semantic_prior_probability->hasNaN());
 
   // Normalize posterior probability.
   // TODO(Toni): no need to normalize all the time unless someone asks
