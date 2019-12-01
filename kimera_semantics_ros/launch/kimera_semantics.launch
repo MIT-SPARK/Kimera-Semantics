@@ -88,9 +88,11 @@
 
     <param name="verbose"                   value="true" />
 
+    <!-- "fast" or "merged" -->
     <param name="semantic_tsdf_integrator_type"    value="fast" />
-    <param name="semantic_color_mode"              value="semantic"/>
-    <param name="semantic_measurement_probability" value="0.55" />
+    <!-- "semantic" or "semantic_probability" -->
+    <param name="semantic_color_mode"              value="semantic_probability"/>
+    <param name="semantic_measurement_probability" value="0.8" />
 
     <!-- Is this needed? -->
     <param name="slice_level" value="1.0" />
