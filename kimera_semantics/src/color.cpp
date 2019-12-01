@@ -40,7 +40,7 @@ size_t ColorHasher::operator()(const HashableColor& k) const {
 }
 
 SemanticLabel2Color::SemanticLabel2Color(const std::string& filename)
-    : color_to_semantic_label_(), semantic_label_to_color_() {
+    : color_to_semantic_label_(), semantic_label_to_color_map_() {
   std::ifstream file(filename.c_str());
   CHECK(file.good()) << "Couldn't open file: " << filename.c_str();
   size_t row_number = 1;
@@ -55,7 +55,7 @@ SemanticLabel2Color::SemanticLabel2Color(const std::string& filename)
     uint8_t a = std::atoi((*loop)[4].c_str());
     uint8_t id = std::atoi((*loop)[5].c_str());
     HashableColor rgba = HashableColor(r, g, b, a);
-    semantic_label_to_color_[id] = rgba;
+    semantic_label_to_color_map_[id] = rgba;
     color_to_semantic_label_[rgba] = id;
     row_number++;
   }
@@ -71,7 +71,7 @@ SemanticLabel SemanticLabel2Color::getSemanticLabelFromColor(
 
 HashableColor SemanticLabel2Color::getColorFromSemanticLabel(
     const SemanticLabel& semantic_label) const {
-  return semantic_label_to_color_.at(semantic_label);
+  return semantic_label_to_color_map_.at(semantic_label);
 }
 
 }  // namespace kimera

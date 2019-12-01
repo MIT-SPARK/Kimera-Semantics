@@ -36,6 +36,11 @@
 
 #include "kimera_semantics_ros/semantic_tsdf_server.h"
 
+#include <voxblox_ros/ros_params.h>
+#include "kimera_semantics_ros/ros_params.h"
+
+#include "kimera_semantics/semantic_tsdf_integrator_factory.h"
+
 namespace kimera {
 
 SemanticTsdfServer::SemanticTsdfServer(const ros::NodeHandle& nh,
@@ -55,31 +60,26 @@ SemanticTsdfServer::SemanticTsdfServer(
     const vxb::MeshIntegratorConfig& mesh_config)
     : vxb::TsdfServer(nh, nh_private, config, integrator_config, mesh_config),
       semantic_config_(getSemanticTsdfIntegratorConfigFromRosParam(nh_private)),
-      semantic_mesh_config_(getSemanticMeshConfigFromRosParam(nh_private)),
       semantic_layer_(nullptr),
       semantic_label_to_color_(
           getSemanticLabelToColorCsvFilepathFromRosParam(nh_private)) {
+  /// Semantic layer
   semantic_layer_.reset(new vxb::Layer<SemanticVoxel>(
       config.tsdf_voxel_size, config.tsdf_voxels_per_side));
-  // Replace the TSDF integrator by the SemanticTsdfIntegrator
+  /// Semantic configuration
   semantic_config_.semantic_label_color_map_ =
-      semantic_label_to_color_.semantic_label_to_color_;
+      semantic_label_to_color_.semantic_label_to_color_map_;
   semantic_config_.color_to_semantic_label_map_ =
       semantic_label_to_color_.color_to_semantic_label_;
-  tsdf_integrator_.reset(
-      new SemanticTsdfIntegrator(integrator_config,
-                                 semantic_config_,
-                                 semantic_layer_.get(),
-                                 tsdf_map_->getTsdfLayerPtr()));
-  // Replace the Mesh integrator by the SemanticMeshIntegrator
-  semantic_mesh_config_.semantic_label_color_map =
-      semantic_label_to_color_.semantic_label_to_color_;
-  mesh_integrator_.reset(
-      new SemanticMeshIntegrator(mesh_config,
-                                 semantic_mesh_config_,
-                                 tsdf_map_->getTsdfLayerPtr(),
-                                 semantic_layer_.get(),
-                                 mesh_layer_.get()));
+  /// Replace the TSDF integrator by the SemanticTsdfIntegrator
+  tsdf_integrator_ =
+      SemanticTsdfIntegratorFactory::create(
+        getSemanticTsdfIntegratorTypeFromRosParam(nh_private),
+        integrator_config,
+        semantic_config_,
+        tsdf_map_->getTsdfLayerPtr(),
+        semantic_layer_.get());
+  CHECK(tsdf_integrator_);
 }
 
 std::string SemanticTsdfServer::getSemanticLabelToColorCsvFilepathFromRosParam(

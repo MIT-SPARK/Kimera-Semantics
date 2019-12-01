@@ -37,13 +37,10 @@
 
 #include <ros/ros.h>
 
-#include <voxblox_ros/ros_params.h>
 #include <voxblox_ros/tsdf_server.h>
 
-#include "kimera_semantics/semantic_mesh_integrator.h"
-#include "kimera_semantics/semantic_tsdf_integrator.h"
 #include "kimera_semantics/semantic_voxel.h"
-#include "kimera_semantics_ros/ros_params.h"
+#include "kimera_semantics/semantic_integrator_base.h"
 
 namespace kimera {
 
@@ -65,8 +62,7 @@ class SemanticTsdfServer : public vxb::TsdfServer {
       const ros::NodeHandle& nh);
 
   // Configs.
-  SemanticTsdfIntegrator::SemanticConfig semantic_config_;
-  SemanticMeshIntegrator::SemanticMeshConfig semantic_mesh_config_;
+  SemanticIntegratorBase::SemanticConfig semantic_config_;
 
   // Layers.
   std::unique_ptr<vxb::Layer<SemanticVoxel>> semantic_layer_;
