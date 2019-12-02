@@ -36,17 +36,9 @@
 
 #pragma once
 
-#include <functional>  // For placeholders for Semantics
-#include <list>
-#include <memory>
-#include <numeric>  // For accumulate for Semantics
-#include <string>
-#include <utility>
-
 #include <Eigen/Core>
 
 #include <voxblox/integrator/tsdf_integrator.h>
-#include <voxblox/utils/timing.h>
 
 #include "kimera_semantics/color.h"
 #include "kimera_semantics/common.h"
