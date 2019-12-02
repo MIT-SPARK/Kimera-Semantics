@@ -36,6 +36,12 @@
 
 #include "kimera_semantics/semantic_tsdf_integrator_fast.h"
 
+#include <list>
+#include <memory>
+#include <utility>
+
+#include <voxblox/utils/timing.h>
+
 #include "kimera_semantics/color.h"
 
 namespace kimera {
