@@ -35,12 +35,11 @@
 
 #include "kimera_semantics/semantic_tsdf_integrator_merged.h"
 
-#include <functional>  // For placeholders for Semantics
 #include <list>
 #include <memory>
-#include <numeric>  // For accumulate for Semantics
-#include <string>
 #include <utility>
+
+#include <glog/logging.h>
 
 #include <Eigen/Core>
 

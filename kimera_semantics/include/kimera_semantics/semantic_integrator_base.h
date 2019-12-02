@@ -37,11 +37,7 @@
 
 #pragma once
 
-#include <functional>  // For placeholders for Semantics
-#include <list>
 #include <memory>
-#include <numeric>  // For accumulate for Semantics
-#include <string>
 #include <utility>
 
 #include <Eigen/Core>
