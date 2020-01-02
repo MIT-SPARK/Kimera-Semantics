@@ -36,6 +36,11 @@ typedef std::unordered_map<HashableColor, SemanticLabel, ColorHasher>
 typedef std::unordered_map<SemanticLabel, HashableColor>
     SemanticLabelToColorMap;
 
+
+// TODO(Toni): this is just to hack our way through the fact that our images
+// are not label ids but just colors :( This is not used if the pointclouds
+// you integrate have associated label ids. It is just for the case where
+// you use its colors as ids.
 class SemanticLabel2Color {
  public:
   SemanticLabel2Color(const std::string& filename);

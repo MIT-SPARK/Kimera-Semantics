@@ -366,7 +366,8 @@ void SemanticIntegratorBase::updateSemanticVoxelColor(
   // thread-safe, and adding mutexes for coloring seems silly.
   // Precompute, for all possible SemanticLabels (255) a color.
   *semantic_voxel_color =
-      semantic_config_.semantic_label_color_map_.at(semantic_label);
+      semantic_config_.semantic_label_to_color_->getColorFromSemanticLabel(
+          semantic_label);
 }
 
 }  // Namespace kimera

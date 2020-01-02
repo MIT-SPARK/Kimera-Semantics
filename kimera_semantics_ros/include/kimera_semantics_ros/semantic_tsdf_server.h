@@ -58,17 +58,11 @@ class SemanticTsdfServer : public vxb::TsdfServer {
   virtual ~SemanticTsdfServer() = default;
 
  protected:
-  static std::string getSemanticLabelToColorCsvFilepathFromRosParam(
-      const ros::NodeHandle& nh);
-
   // Configs.
   SemanticIntegratorBase::SemanticConfig semantic_config_;
 
   // Layers.
   std::unique_ptr<vxb::Layer<SemanticVoxel>> semantic_layer_;
-
-  // Map from semantic label to actual color.
-  const SemanticLabel2Color semantic_label_to_color_;
 };
 
 }  // Namespace kimera

@@ -28,6 +28,13 @@ getSemanticTsdfIntegratorTypeFromRosParam(const ros::NodeHandle& nh_private) {
   return semantic_tsdf_integrator_type;
 }
 
+inline std::string getSemanticLabelToColorCsvFilepathFromRosParam(
+    const ros::NodeHandle& nh) {
+  std::string path = "semantics2labels.csv";
+  nh.param("semantic_label_2_color_csv_filepath", path, path);
+  return path;
+}
+
 inline SemanticIntegratorBase::SemanticConfig
 getSemanticTsdfIntegratorConfigFromRosParam(const ros::NodeHandle& nh_private) {
   SemanticIntegratorBase::SemanticConfig semantic_config;
@@ -53,6 +60,11 @@ getSemanticTsdfIntegratorConfigFromRosParam(const ros::NodeHandle& nh_private) {
   } else {
     LOG(FATAL) << "Unknown semantic color mode: " << color_mode;
   }
+
+  // Get semantic map
+  semantic_config.semantic_label_to_color_ =
+      kimera::make_unique<SemanticLabel2Color>(
+      getSemanticLabelToColorCsvFilepathFromRosParam(nh_private);
 
   return semantic_config;
 }

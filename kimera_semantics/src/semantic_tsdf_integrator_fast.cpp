@@ -150,8 +150,10 @@ void FastSemanticTsdfIntegrator::integratePointCloud(
   // TODO(Toni): parallelize with openmp
   for (size_t i = 0; i < colors.size(); i++) {
     const vxb::Color& color = colors[i];
-    semantic_labels[i] = semantic_config_.color_to_semantic_label_map_.at(
-        HashableColor(color.r, color.g, color.b, 255u));
+    CHECK(semantic_config_.semantic_label_to_color_);
+    semantic_labels[i] =
+        semantic_config_.semantic_label_to_color_->getSemanticLabelFromColor(
+            HashableColor(color.r, color.g, color.b, 255u));
   }
 
   vxb::timing::Timer integrate_timer("integrate/fast");

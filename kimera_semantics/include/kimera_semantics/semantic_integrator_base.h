@@ -79,14 +79,8 @@ class SemanticIntegratorBase {
     /// How to color the semantic mesh.
     ColorMode color_mode = ColorMode::kSemantic;
 
-    SemanticLabelToColorMap semantic_label_color_map_ =
-        getRandomSemanticLabelToColorMap();
 
-    // TODO(Toni): this is just to hack our way through the fact that our images
-    // are not label ids but just colors :( This is not used if the pointclouds
-    // you integrate have associated label ids. It is just for the case where
-    // you use its colors as ids.
-    ColorToSemanticLabelMap color_to_semantic_label_map_;
+    std::shared_ptr<SemanticLabel2Color> semantic_label_to_color_ = nullptr;
   };
 
   SemanticIntegratorBase(const SemanticConfig& semantic_config,

@@ -15,6 +15,7 @@
   <node name="player" pkg="rosbag" type="play" output="screen"
   args="-r 0.5 --clock $(arg bag_file)"  if="$(arg play_bag)"/>
 
+  <!-- Generate pointcloud with semantic labels -->
   <arg name="publish_point_clouds" default="true"/>
   <arg name="run_stereo_dense"     default="false"/>
   <group if="$(arg publish_point_clouds)">
@@ -27,8 +28,8 @@
           -no-bond" unless="$(arg run_stereo_dense)">
       <!-- Input -->
       <remap from="rgb/camera_info"             to="/tesse/left_cam/camera_info"/>
-      <remap from="rgb/image_rect_color"        to="/tesse/segmentation"/>
-      <remap from="depth_registered/image_rect" to="/tesse/depth"/>
+      <remap from="rgb/image_rect_color"        to="/tesse/segmentation/image_raw"/>
+      <remap from="depth_registered/image_rect" to="/tesse/depth/image_raw"/>
       <!-- Output -->
       <remap from="depth_registered/points"     to="/points"/>
       <!-- Params -->
@@ -42,9 +43,9 @@
       <!-- Input -->
       <remap from="left/image_rect_color"   to="/dev/null/left_cam"/>
       <remap from="right/image_rect_color"  to="/dev/null/right_cam"/>
-      <remap from="left/image_raw"          to="/tesse/left_cam"/>
+      <remap from="left/image_raw"          to="/tesse/left_cam/image_raw"/>
       <remap from="left/camera_info"        to="/tesse/left_cam/camera_info"/>
-      <remap from="right/image_raw"         to="/tesse/right_cam"/>
+      <remap from="right/image_raw"         to="/tesse/right_cam/image_raw"/>
       <remap from="right/camera_info"       to="/tesse/right_cam/camera_info"/>
       <!-- Output -->
       <remap from="/stereo_gray/points2"    to="/stereo_gray/points2"/>
@@ -57,7 +58,7 @@
       pkg="pointcloud_recolor" output="screen"
       args="-alsologtostderr" required="true" if="$(arg run_stereo_dense)">
       <!-- Input -->
-      <remap from="image_in"               to="/tesse/segmentation"/>
+      <remap from="image_in"               to="/tesse/segmentation/image_raw"/>
       <remap from="pointcloud_in"          to="/stereo_gray/points2"/>
       <!-- Output -->
       <remap from="pointcloud_recolor_out" to="/points"/>
