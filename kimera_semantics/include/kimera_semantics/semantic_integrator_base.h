@@ -79,8 +79,11 @@ class SemanticIntegratorBase {
     /// How to color the semantic mesh.
     ColorMode color_mode = ColorMode::kSemantic;
 
-
     std::shared_ptr<SemanticLabel2Color> semantic_label_to_color_ = nullptr;
+
+    /// Semantic labels for dynamic objects that are not supposed to be
+    /// integrated in the voxel grid.
+    SemanticLabels dynamic_labels_ = SemanticLabels();
   };
 
   SemanticIntegratorBase(const SemanticConfig& semantic_config,
@@ -161,6 +164,15 @@ class SemanticIntegratorBase {
   // THREAD SAFE
   void updateSemanticVoxelColor(const SemanticLabel& semantic_label,
                                 HashableColor* semantic_voxel_color) const;
+
+ protected:
+  /// Thread safe.
+  inline bool isSemanticLabelValid(const SemanticLabel& semantic_label) const {
+    // We discard any point in the dynamic semantic labels.
+    return std::find(semantic_config_.dynamic_labels_.begin(),
+                     semantic_config_.dynamic_labels_.end(),
+                     semantic_label) == semantic_config_.dynamic_labels_.end();
+  }
 
  private:
   /**

@@ -7,6 +7,7 @@ catkin_simple()
 
 cs_add_library(${PROJECT_NAME}
   src/semantic_tsdf_server.cpp
+  src/ros_params.cpp
 )
 
 cs_add_executable(kimera_semantics_node

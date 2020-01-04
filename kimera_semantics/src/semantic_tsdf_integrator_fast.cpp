@@ -72,7 +72,8 @@ void FastSemanticTsdfIntegrator::integrateSemanticFunction(
     const vxb::Color& color = colors[point_idx];
     const SemanticLabel& semantic_label = semantic_labels[point_idx];
     bool is_clearing;
-    if (!isPointValid(point_C, freespace_points, &is_clearing)) {
+    if (!isPointValid(point_C, freespace_points, &is_clearing) ||
+        !isSemanticLabelValid(semantic_label)) {
       continue;
     }
 
