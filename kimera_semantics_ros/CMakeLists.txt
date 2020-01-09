@@ -15,6 +15,11 @@ cs_add_executable(kimera_semantics_node
 )
 target_link_libraries(kimera_semantics_node ${PROJECT_NAME})
 
+cs_add_executable(semantic_simulator_eval
+  src/semantic_simulation_eval.cpp
+)
+target_link_libraries(semantic_simulator_eval ${PROJECT_NAME})
+
 cs_install()
 
 cs_export()
