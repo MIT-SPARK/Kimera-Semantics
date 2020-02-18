@@ -81,21 +81,10 @@ void MergedSemanticTsdfIntegrator::integratePointCloud(
     // TODO(Toni): Pointcloud recolor sets `a` field to 0. Making the
     // map lookup fail.
     const vxb::Color& color = colors[i];
-    hash_colors.at(i) = HashableColor(color.r, color.g, color.b, 255u);
-    // const auto& it =
-    // semantic_config_.color_to_semantic_label_map_.find(color_a); if (it !=
-    // semantic_config_.color_to_semantic_label_map_.end()) {
+    CHECK(semantic_config_.semantic_label_to_color_);
     semantic_labels[i] =
-        semantic_config_.color_to_semantic_label_map_.at(
-          hash_colors.at(i));
-    //} else {
-    //  LOG(ERROR) << "Caught an unknown color: \n"
-    //             << "RGB: " << std::to_string(color_a.r) << ' '
-    //             <<  std::to_string(color_a.g) << ' '
-    //              <<  std::to_string(color_a.b) << ' '
-    //              <<  std::to_string(color_a.a);
-    //  semantic_labels[i] = 0u; // Assign unknown label for now...
-    //}
+        semantic_config_.semantic_label_to_color_->getSemanticLabelFromColor(
+            HashableColor(color.r, color.g, color.b, 255u));
   }
 
   vxb::timing::Timer integrate_pcl_semantic_tsdf_timer(

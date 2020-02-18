@@ -79,14 +79,11 @@ class SemanticIntegratorBase {
     /// How to color the semantic mesh.
     ColorMode color_mode = ColorMode::kSemantic;
 
-    SemanticLabelToColorMap semantic_label_color_map_ =
-        getRandomSemanticLabelToColorMap();
+    std::shared_ptr<SemanticLabel2Color> semantic_label_to_color_ = nullptr;
 
-    // TODO(Toni): this is just to hack our way through the fact that our images
-    // are not label ids but just colors :( This is not used if the pointclouds
-    // you integrate have associated label ids. It is just for the case where
-    // you use its colors as ids.
-    ColorToSemanticLabelMap color_to_semantic_label_map_;
+    /// Semantic labels for dynamic objects that are not supposed to be
+    /// integrated in the voxel grid.
+    SemanticLabels dynamic_labels_ = SemanticLabels();
   };
 
   SemanticIntegratorBase(const SemanticConfig& semantic_config,
@@ -167,6 +164,15 @@ class SemanticIntegratorBase {
   // THREAD SAFE
   void updateSemanticVoxelColor(const SemanticLabel& semantic_label,
                                 HashableColor* semantic_voxel_color) const;
+
+ protected:
+  /// Thread safe.
+  inline bool isSemanticLabelValid(const SemanticLabel& semantic_label) const {
+    // We discard any point in the dynamic semantic labels.
+    return std::find(semantic_config_.dynamic_labels_.begin(),
+                     semantic_config_.dynamic_labels_.end(),
+                     semantic_label) == semantic_config_.dynamic_labels_.end();
+  }
 
  private:
   /**

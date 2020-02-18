@@ -9,9 +9,10 @@ cs_add_library(${PROJECT_NAME}
   src/color.cpp
   src/csv_iterator.cpp
   src/semantic_integrator_base.cpp
-  src/semantic_tsdf_integrator_merged.cpp
-  src/semantic_tsdf_integrator_fast.cpp
   src/semantic_tsdf_integrator_factory.cpp
+  src/semantic_tsdf_integrator_fast.cpp
+  src/semantic_tsdf_integrator_merged.cpp
+  src/simulation/semantic_simulation_world.cpp
 )
 
 cs_install()

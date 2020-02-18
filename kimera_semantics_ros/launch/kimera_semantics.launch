@@ -11,10 +11,22 @@
 
   <!-- If you want to play directly from a rosbag -->
   <arg name="play_bag" default="false"/>
-  <arg name="bag_file" default=""/>
+  <!-- Let's go at twice real-time to show the speed! It can go faster, but then rviz struggles. -->
+  <arg name="rosbag_rate" default="2.0"/>
+  <arg name="bag_file" default="$(find kimera_semantics_ros)/rosbags/kimera_semantics_demo.bag"/>
   <node name="player" pkg="rosbag" type="play" output="screen"
-  args="-r 0.5 --clock $(arg bag_file)"  if="$(arg play_bag)"/>
+    args="--clock --rate $(arg rosbag_rate) $(arg bag_file)"  if="$(arg play_bag)">
+    <!-- The rosbag we first generated did not follow ROS naming standards for image topics,
+         so we remap the topics accordingly here.-->
+    <remap from="/tesse/left_cam" to="/tesse/left_cam/image_raw"/>
+    <remap from="/tesse/segmentation" to="/tesse/segmentation/image_raw"/>
+    <remap from="/tesse/depth" to="/tesse/depth/image_raw"/>
+  </node>
 
+  <!-- If you just want to run 3D reconstruction without semantics, set this flag to false-->
+  <arg name="metric_semantic_reconstruction" default="true"/>
+
+  <!-- Generate pointcloud with semantic labels -->
   <arg name="publish_point_clouds" default="true"/>
   <arg name="run_stereo_dense"     default="false"/>
   <group if="$(arg publish_point_clouds)">
@@ -27,8 +39,9 @@
           -no-bond" unless="$(arg run_stereo_dense)">
       <!-- Input -->
       <remap from="rgb/camera_info"             to="/tesse/left_cam/camera_info"/>
-      <remap from="rgb/image_rect_color"        to="/tesse/segmentation"/>
-      <remap from="depth_registered/image_rect" to="/tesse/depth"/>
+      <remap from="rgb/image_rect_color"        to="/tesse/segmentation/image_raw" if="$(arg metric_semantic_reconstruction)"/>
+      <remap from="rgb/image_rect_color"        to="/tesse/left_cam/image_raw" unless="$(arg metric_semantic_reconstruction)"/>
+      <remap from="depth_registered/image_rect" to="/tesse/depth/image_raw"/>
       <!-- Output -->
       <remap from="depth_registered/points"     to="/points"/>
       <!-- Params -->
@@ -42,9 +55,9 @@
       <!-- Input -->
       <remap from="left/image_rect_color"   to="/dev/null/left_cam"/>
       <remap from="right/image_rect_color"  to="/dev/null/right_cam"/>
-      <remap from="left/image_raw"          to="/tesse/left_cam"/>
+      <remap from="left/image_raw"          to="/tesse/left_cam/image_raw"/>
       <remap from="left/camera_info"        to="/tesse/left_cam/camera_info"/>
-      <remap from="right/image_raw"         to="/tesse/right_cam"/>
+      <remap from="right/image_raw"         to="/tesse/right_cam/image_raw"/>
       <remap from="right/camera_info"       to="/tesse/right_cam/camera_info"/>
       <!-- Output -->
       <remap from="/stereo_gray/points2"    to="/stereo_gray/points2"/>
@@ -57,17 +70,19 @@
       pkg="pointcloud_recolor" output="screen"
       args="-alsologtostderr" required="true" if="$(arg run_stereo_dense)">
       <!-- Input -->
-      <remap from="image_in"               to="/tesse/segmentation"/>
+      <remap from="image_in"               to="/tesse/segmentation/image_raw" if="$(arg metric_semantic_reconstruction)"/>
+      <remap from="image_in"               to="/tesse/left_cam/image_raw" unless="$(arg metric_semantic_reconstruction)"/>
       <remap from="pointcloud_in"          to="/stereo_gray/points2"/>
       <!-- Output -->
       <remap from="pointcloud_recolor_out" to="/points"/>
     </node>
   </group>
 
-  <!-- Send colored pointcloud with semantics to kimera_semantics for 3D segmentation -->
-  <arg name="server_type" default="kimera_semantics_node"/>
-  <node name="kimera_semantics_node" pkg="kimera_semantics_ros"
-    type="$(arg server_type)" output="screen"
+  <arg name="pkg_type" default="kimera_semantics_ros" if="$(arg metric_semantic_reconstruction)"/>
+  <arg name="server_type" default="kimera_semantics_node" if="$(arg metric_semantic_reconstruction)"/>
+  <arg name="pkg_type" default="voxblox_ros" unless="$(arg metric_semantic_reconstruction)"/>
+  <arg name="server_type" default="tsdf_server" unless="$(arg metric_semantic_reconstruction)"/>
+  <node name="kimera_semantics_node" pkg="$(arg pkg_type)" type="$(arg server_type)" output="screen"
     args="-alsologtostderr -colorlogtostderr" clear_params="true">
     <!-- Input -->
     <remap from="pointcloud" to="/points"/>
@@ -76,7 +91,7 @@
     <param name="tsdf_voxels_per_side"      value="32" />
     <param name="max_ray_length_m"          value="15.0" />
     <param name="min_time_between_msgs_sec" value="0.2" />
-    <param name="voxel_carving_enabled"     value="false" />
+    <param name="voxel_carving_enabled"     value="true" />
     <param name="color_mode"                value="lambert_color"/>
     <param name="use_const_weight"          value="false" />
 
@@ -88,11 +103,13 @@
 
     <param name="verbose"                   value="true" />
 
-    <!-- "fast" or "merged" -->
-    <param name="semantic_tsdf_integrator_type"    value="fast" />
+    <!-- Method to update voxels' information: "fast" or "merged" -->
+    <param name="method"                           value="fast" />
     <!-- "color", "semantic" or "semantic_probability" -->
     <param name="semantic_color_mode"              value="semantic"/>
     <param name="semantic_measurement_probability" value="0.8" />
+    <!-- The only dynamic label we have right now are humans, with label 20 -->
+    <rosparam param="dynamic_semantic_labels">[20]</rosparam>
 
     <!-- Is this needed? -->
     <param name="slice_level" value="1.0" />
@@ -101,7 +118,7 @@
     value="$(find kimera_semantics_ros)/cfg/tesse_multiscene_office1_segmentation_mapping.csv"/>
 
     <param name="publish_pointclouds"     value="false"/>
-    <param name="update_mesh_every_n_sec" value="0.2" />
+    <param name="update_mesh_every_n_sec" value="0.1" />
     <param name="mesh_filename"           value="$(find kimera_semantics_ros)/mesh_results/$(anon tesse).ply" />
   </node>
 </launch>

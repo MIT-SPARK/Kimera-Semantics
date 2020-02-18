@@ -36,10 +36,13 @@
 
 #include "kimera_semantics_ros/semantic_tsdf_server.h"
 
-#include <voxblox_ros/ros_params.h>
-#include "kimera_semantics_ros/ros_params.h"
+#include <glog/logging.h>
 
-#include "kimera_semantics/semantic_tsdf_integrator_factory.h"
+#include <voxblox_ros/ros_params.h>
+
+#include <kimera_semantics/semantic_tsdf_integrator_factory.h>
+
+#include "kimera_semantics_ros/ros_params.h"
 
 namespace kimera {
 
@@ -60,17 +63,10 @@ SemanticTsdfServer::SemanticTsdfServer(
     const vxb::MeshIntegratorConfig& mesh_config)
     : vxb::TsdfServer(nh, nh_private, config, integrator_config, mesh_config),
       semantic_config_(getSemanticTsdfIntegratorConfigFromRosParam(nh_private)),
-      semantic_layer_(nullptr),
-      semantic_label_to_color_(
-          getSemanticLabelToColorCsvFilepathFromRosParam(nh_private)) {
+      semantic_layer_(nullptr) {
   /// Semantic layer
   semantic_layer_.reset(new vxb::Layer<SemanticVoxel>(
       config.tsdf_voxel_size, config.tsdf_voxels_per_side));
-  /// Semantic configuration
-  semantic_config_.semantic_label_color_map_ =
-      semantic_label_to_color_.semantic_label_to_color_map_;
-  semantic_config_.color_to_semantic_label_map_ =
-      semantic_label_to_color_.color_to_semantic_label_;
   /// Replace the TSDF integrator by the SemanticTsdfIntegrator
   tsdf_integrator_ =
       SemanticTsdfIntegratorFactory::create(
@@ -80,13 +76,6 @@ SemanticTsdfServer::SemanticTsdfServer(
         tsdf_map_->getTsdfLayerPtr(),
         semantic_layer_.get());
   CHECK(tsdf_integrator_);
-}
-
-std::string SemanticTsdfServer::getSemanticLabelToColorCsvFilepathFromRosParam(
-    const ros::NodeHandle& nh) {
-  std::string path = "semantics2labels.csv";
-  nh.param("semantic_label_2_color_csv_filepath", path, path);
-  return path;
 }
 
 }  // Namespace kimera

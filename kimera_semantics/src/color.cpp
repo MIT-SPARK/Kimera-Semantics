@@ -66,12 +66,29 @@ SemanticLabel2Color::SemanticLabel2Color(const std::string& filename)
 
 SemanticLabel SemanticLabel2Color::getSemanticLabelFromColor(
     const HashableColor& color) const {
-  return color_to_semantic_label_.at(color);
+  const auto& it = color_to_semantic_label_.find(color);
+  if (it != color_to_semantic_label_.end()) {
+    return it->second;
+  } else {
+    LOG(ERROR) << "Caught an unknown color: \n"
+               << "RGB: " << std::to_string(color.r) << ' '
+               <<  std::to_string(color.g) << ' '
+               <<  std::to_string(color.b) << ' '
+               <<  std::to_string(color.a);
+    return 0u; // Assign unknown label for now...
+  }
 }
 
 HashableColor SemanticLabel2Color::getColorFromSemanticLabel(
     const SemanticLabel& semantic_label) const {
-  return semantic_label_to_color_map_.at(semantic_label);
+  const auto& it = semantic_label_to_color_map_.find(semantic_label);
+  if (it != semantic_label_to_color_map_.end()) {
+    return it->second;
+  } else {
+    LOG(ERROR) << "Caught an unknown semantic label: \n"
+               << "Label: " << std::to_string(semantic_label);
+    return HashableColor(); // Assign unknown color for now...
+  }
 }
 
 }  // namespace kimera
