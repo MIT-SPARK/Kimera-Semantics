@@ -6,10 +6,14 @@
 
 #pragma once
 
+#include <string>
+
 #include <ros/ros.h>
 
-#include <kimera_semantics/common.h>
-#include <kimera_semantics/semantic_integrator_base.h>
+#include <glog/logging.h>
+
+#include "kimera_semantics/common.h"
+#include "kimera_semantics/semantic_integrator_base.h"
 
 namespace kimera {
 
