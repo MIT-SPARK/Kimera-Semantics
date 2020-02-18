@@ -22,7 +22,7 @@ getSemanticTsdfIntegratorTypeFromRosParam(const ros::NodeHandle& nh_private) {
   // Get semantic tsdf integrator type, by default using "fast"
   // (could be "merged").
   std::string semantic_tsdf_integrator_type = "fast";
-  nh_private.param("semantic_tsdf_integrator_type",
+  nh_private.param("method",
                    semantic_tsdf_integrator_type,
                    semantic_tsdf_integrator_type);
   return semantic_tsdf_integrator_type;
