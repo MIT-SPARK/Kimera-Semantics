@@ -120,20 +120,20 @@ source ~/catkin_ws/devel/setup.bash
   ```
 
   > Note: you will need to source your `catkin_ws` for each new terminal unless you added the following line to your `~/.bashrc` file:
-  > ```bash
-  > source ~/catkin_ws/devel/setup.bash # Change `bash` to the shell you use.
-  > ```
+  > `source ~/catkin_ws/devel/setup.bash # Change `bash` to the shell you use.`
 
   > Note 2: you might need to check/uncheck once the `Kimera Semantic 3D Mesh` left pane topic in rviz to visualize the mesh.
 
   # 3. FAQ
 
   - Minkindr doesn't compile:
+  
     Catkin ignore the `minkindr_python` catkin package:
-    ```
-    touch ~/catkin_ws/src/minkindr/minkindr_python/CATKIN_IGNORE
-    ```
+    `touch ~/catkin_ws/src/minkindr/minkindr_python/CATKIN_IGNORE`
 
   - How to run Kimera-Semantics without Semantics?
+  
     We are using Voxblox as our 3D reconstruction library, therefore, to run without semantics, simply do:
-    `roslaunch kimera_semantics_ros kimera_semantics.launch play_bag:=true metric_semantic_reconstruction:=false`
+    ```bash
+    roslaunch kimera_semantics_ros kimera_semantics.launch play_bag:=true metric_semantic_reconstruction:=false
+    ```
