@@ -103,38 +103,37 @@ source ~/catkin_ws/devel/setup.bash
 
 # 2. Usage
 
-  0. Download the [demo rosbag (click here to download)](https://drive.google.com/open?id=1jpuE6tMDoJyNq2Wu2EsVAc1r3e7qteUf) and save it inside the rosbag folder in the kimera folder: `./kimera/rosbag/kimera_semantics_demo.bag`.
+  0. Download the [demo rosbag (click here to download)](https://drive.google.com/open?id=1jpuE6tMDoJyNq2Wu2EsVAc1r3e7qteUf) and save it in: `./kimera_semantics_ros/rosbag/kimera_semantics_demo.bag`.
 
   1. As a general good practice, open a new terminal and run: `roscore`
 
-  2. In another terminal, launch the [provided rosbag (click here to download)](https://drive.google.com/open?id=1jpuE6tMDoJyNq2Wu2EsVAc1r3e7qteUf):
+  2. In another terminal, launch Kimera-Semantics:
   ```bash
-  rosbag play --clock --pause $(rosstack find kimera)/rosbags/kimera_semantics_demo.bag
+  roslaunch kimera_semantics_ros kimera_semantics.launch play_bag:=true
   ```
 
-  3. In another terminal, launch Kimera-Semantics:
-  ```bash
-  roslaunch kimera_semantics_ros kimera_semantics.launch
-  ```
+  This will launch the rosbag that was downloaded in step 0 and will launch Kimera-Semantics.
 
-  4. In another terminal, launch rviz for visualization:
+  3. In another terminal, launch rviz for visualization:
   ```bash
   rviz -d $(rospack find kimera_semantics_ros)/rviz/kimera_semantics_gt.rviz
   ```
 
-  Now, go back to the terminal where the rosbag was launched and just press `space` to run the rosbag.
-
   > Note: you will need to source your `catkin_ws` for each new terminal unless you added the following line to your `~/.bashrc` file:
-  > ```bash
-  > source ~/catkin_ws/devel/setup.bash # Change `bash` to the shell you use.
-  > ```
+  > `source ~/catkin_ws/devel/setup.bash # Change `bash` to the shell you use.`
 
-  > Note 2: you might need to check/uncheck once the `Kimera Semantic 3D Mesh` left pane topic in rviz.
+  > Note 2: you might need to check/uncheck once the `Kimera Semantic 3D Mesh` left pane topic in rviz to visualize the mesh.
 
   # 3. FAQ
 
   - Minkindr doesn't compile:
+  
     Catkin ignore the `minkindr_python` catkin package:
-    ```
-    touch ~/catkin_ws/src/minkindr/minkindr_python/CATKIN_IGNORE
+    `touch ~/catkin_ws/src/minkindr/minkindr_python/CATKIN_IGNORE`
+
+  - How to run Kimera-Semantics without Semantics?
+  
+    We are using Voxblox as our 3D reconstruction library, therefore, to run without semantics, simply do:
+    ```bash
+    roslaunch kimera_semantics_ros kimera_semantics.launch play_bag:=true metric_semantic_reconstruction:=false
     ```

@@ -42,7 +42,7 @@
     <param name="icp_iterations"            value="10" />
 
     <!-- "fast" or "merged" -->
-    <param name="semantic_tsdf_integrator_type"    value="fast" />
+    <param name="method"    value="fast" />
     <!-- "color", "semantic" or "semantic_probability" -->
     <param name="semantic_color_mode"              value="semantic"/>
     <param name="semantic_measurement_probability" value="0.8" />
