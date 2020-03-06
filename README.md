@@ -104,7 +104,7 @@ source ~/catkin_ws/devel/setup.bash
 
 # 2. Usage
 
-  0. Download the [demo rosbag (click here to download)](https://drive.google.com/open?id=1jpuE6tMDoJyNq2Wu2EsVAc1r3e7qteUf) and save it in: `./kimera_semantics_ros/rosbag/kimera_semantics_demo.bag`.
+  0. Download the [demo rosbag (click here to download)](https://drive.google.com/file/d/1SG8cfJ6JEfY2PGXcxDPAMYzCcGBEh4Qq/view?usp=sharing) and save it in: `./kimera_semantics_ros/rosbag/kimera_semantics_demo.bag`.
 
   1. As a general good practice, open a new terminal and run: `roscore`
 
