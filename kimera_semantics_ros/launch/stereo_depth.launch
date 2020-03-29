@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="ISO-8859-15"?>
+<launch>
+
+  <!-- Input topic names for stereo dense depth reconstruction -->
+  <arg name="left_cam_info_topic"  default="/tesse/left_cam/camera_info"/>
+  <arg name="right_cam_info_topic" default="/tesse/right_cam/camera_info"/>
+  <arg name="left_cam_topic"       default="/tesse/left_cam/image_raw"/>
+  <arg name="right_cam_topic"      default="/tesse/right_cam/image_raw"/>
+
+  <!-- Output topic names -->
+  <arg name="pointcloud"           default="points2"/>
+  <arg name="disparity_image"      default="disparity"/>
+
+  <!-- Stereo Depth reconstruction generates a 3D pointcloud and a Disparity Image.
+       If you want to generate a depth image as well, set to true this flag -->
+  <arg name="convert_disparity_img_to_depth_img" default="false"/>
+  <arg name="depth_image"                        default="depth/image_raw"/>
+
+  <group>
+     <!-- Run stereo_dense_reconstruction_node -->
+    <node name="stereo_image_proc" pkg="stereo_image_proc"
+      type="stereo_image_proc" clear_params="true" output="screen">
+      <!-- Input -->
+      <remap from="left/image_rect_color"   to="/dev/null/left_cam"/>
+      <remap from="right/image_rect_color"  to="/dev/null/right_cam"/>
+
+      <remap from="left/image_raw"          to="$(arg left_cam_topic)"/>
+      <remap from="right/image_raw"         to="$(arg right_cam_topic)"/>
+
+      <remap from="left/camera_info"        to="$(arg left_cam_info_topic)"/>
+      <remap from="right/camera_info"       to="$(arg right_cam_info_topic)"/>
+
+      <!-- Output -->
+      <remap from="/stereo_gray/points2"    to="$(arg pointcloud)"/>
+      <remap from="disparity"               to="$(arg disparity_image)"/>
+
+      <!-- Params -->
+      <param name="approximate_sync" value="true" />
+    </node>
+
+    <!-- Run converter from the stereo disparity image to a depth image -->
+    <group if="$(arg convert_disparity_img_to_depth_img)">
+      <!-- Launch Nodelete manager -->
+      <node pkg="nodelet" type="nodelet" name="nodelet_manager" args="manager"
+            output="screen"/>
+
+      <!-- Launch actual disparity to depth image converter -->
+      <node name="disparity_image_proc" pkg="nodelet" type="nodelet"
+        args="load disparity_image_proc/depth_image nodelete_manager" output="screen">
+        <!-- Inputs -->
+        <remap from="disparity"             to="$(arg disparity_image)"/>
+        <remap from="left/camera_info"      to="$(arg left_cam_info_topic)"/>
+        <remap from="right/camera_info"     to="$(arg right_cam_info_topic)"/>
+
+        <!-- Output -->
+        <remap from="~depth_image"          to="~$(arg depth_image)"/>
+
+        <!-- Params -->
+        <param name="queue_size"         value="5"/>
+        <param name="approximate_sync"   value="true"/>
+      </node>
+    </group>
+  </group>
+</launch>
