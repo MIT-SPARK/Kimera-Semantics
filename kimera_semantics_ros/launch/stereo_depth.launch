@@ -39,20 +39,11 @@
 
   <!-- Run converter from the stereo disparity image to a depth image -->
   <group if="$(arg convert_disparity_img_to_depth_img)">
-    <!-- Launch actual disparity to depth image converter -->
-    <node name="disparity_to_depth" pkg="nodelet" type="nodelet"
-      args="load disparity_image_proc/depth_image nodelet_manager" output="screen">
-      <!-- Inputs -->
-      <remap from="disparity"             to="$(arg disparity_image)"/>
-      <remap from="left/camera_info"      to="$(arg left_cam_info_topic)"/>
-      <remap from="right/camera_info"     to="$(arg right_cam_info_topic)"/>
-
-      <!-- Output -->
-      <remap from="depth_image"          to="$(arg depth_image)"/>
-
-      <!-- Params -->
-      <param name="queue_size"         value="5"/>
-      <param name="approximate_sync"   value="true"/>
-    </node>
+  <include file="$(find kimera_semantics_ros)/launch/disparity_to_depth.launch">
+    <arg name="left_cam_info_topic"         value="$(arg left_cam_info_topic)"/>
+    <arg name="right_cam_info_topic"        value="$(arg right_cam_info_topic)"/>
+    <arg name="disparity_image"             value="$(arg disparity_image)"/>
+    <arg name="depth_image"                 value="$(arg depth_image)"/>
+  </include>
   </group>
 </launch>
