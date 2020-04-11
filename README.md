@@ -137,3 +137,16 @@ source ~/catkin_ws/devel/setup.bash
     ```bash
     roslaunch kimera_semantics_ros kimera_semantics.launch play_bag:=true metric_semantic_reconstruction:=false
     ```
+
+  - How to enable Dense Depth Stereo estimation
+
+This will run OpenCV's StereoBM algorithm, more info can be found [here](http://wiki.ros.org/stereo_image_proc) (also checkout this to [choose good parameters](http://wiki.ros.org/stereo_image_proc/Tutorials/ChoosingGoodStereoParameters)):
+
+```bash
+roslaunch kimera_semantics_ros kimera_semantics.launch run_stereo_dense:=1
+```
+
+This will publish a `/points2` topic, which you can visualize in Rviz as a 3D pointcloud.
+Alternatively, if you want to visualize the depth image, since Rviz does not provide a plugin to
+visualize a [disparity image](http://docs.ros.org/api/stereo_msgs/html/msg/DisparityImage.html), we also run a [disparity_image_proc](https://github.com/ToniRV/disparity_image_proc) nodelet that will publish the depth image to `/depth_image`.
+

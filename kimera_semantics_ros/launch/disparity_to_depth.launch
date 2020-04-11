@@ -1,0 +1,32 @@
+<launch>
+  <!-- Inputs -->
+  <arg name="left_cam_info_topic"               default="/tesse/left_cam/camera_info"/>
+  <arg name="right_cam_info_topic"              default="/tesse/right_cam/camera_info"/>
+  <arg name="disparity_image"                   default="/disparity"/>
+
+  <!-- Output -->
+  <arg name="depth_image"                       default="depth/image_raw"/>
+
+  <!-- Params -->
+  <!-- Set to true if you don't plan to launch a nodelet manager yourself -->
+  <arg name="start_nodelet_manager" default="false"/>
+
+  <!-- Start nodelet manager only if requested -->
+  <node pkg="nodelet" type="nodelet" name="nodelet_manager"  args="manager" if="$(arg start_nodelet_manager)"/>
+
+  <!-- Run converter from the stereo disparity image to a depth image -->
+  <node name="disparity_to_depth" pkg="nodelet" type="nodelet"
+    args="load disparity_image_proc/depth_image nodelet_manager" output="screen">
+    <!-- Inputs -->
+    <remap from="disparity"             to="$(arg disparity_image)"/>
+    <remap from="left/camera_info"      to="$(arg left_cam_info_topic)"/>
+    <remap from="right/camera_info"     to="$(arg right_cam_info_topic)"/>
+
+    <!-- Output -->
+    <remap from="depth_image"          to="$(arg depth_image)"/>
+
+    <!-- Params -->
+    <param name="queue_size"         value="5"/>
+    <param name="approximate_sync"   value="true"/>
+  </node>
+</launch>
