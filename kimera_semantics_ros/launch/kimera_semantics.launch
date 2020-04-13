@@ -4,8 +4,8 @@
   <param name="use_sim_time" value="true" />
 
   <!-- Change sensor frame to:
-   - VIO's estimated base_link: `left_cam_base_link`
-   - Or, if you want to use simulator's ground-truth: `left_cam`
+   - 1. VIO's estimated base_link: `left_cam_base_link`
+   - 2. Or, if you want to use simulator's ground-truth: `left_cam`
   -->
   <arg name="sensor_frame" default="left_cam"/>
 
@@ -26,66 +26,68 @@
   <!-- If you just want to run 3D reconstruction without semantics, set this flag to false-->
   <arg name="metric_semantic_reconstruction" default="true"/>
 
-  <!-- Generate pointcloud with semantic labels -->
+  <!-- Input -->
+  <arg name="semantic_pointcloud"         default="/semantic_pointcloud"/>
+  <arg name="left_cam_info_topic"         default="/tesse/left_cam/camera_info"/>
+  <arg name="right_cam_info_topic"        default="/tesse/right_cam/camera_info"/>
+  <arg name="left_cam_topic"              default="/tesse/left_cam/image_raw"/>
+  <arg name="right_cam_topic"             default="/tesse/right_cam/image_raw"/>
+  <arg name="left_cam_segmentation_topic" default="/tesse/segmentation/image_raw"/>
+  <arg name="left_cam_depth_topic"        default="/tesse/depth/image_raw"/>
+
+  <!-- Generate input pointcloud with semantic labels for kimera-semantics:
+     - 1. Using the depth image and registered semantic image (run_stereo_dense=false).
+     - 2. Using stereo depth reconstruction (run_stereo_dense=true). -->
   <arg name="publish_point_clouds" default="true"/>
   <arg name="run_stereo_dense"     default="false"/>
   <group if="$(arg publish_point_clouds)">
+    <!-- Launch Nodelet manager: used by depth_image_proc and disparity_image_proc -->
     <node pkg="nodelet" type="nodelet" name="nodelet_manager" args="manager"
-          output="screen"/>
+      output="screen"/>
 
-    <!-- For registered semantic point cloud conversion -->
+    <!-- Run stereo_dense_reconstruction_node (only if we don't use the depth image). -->
+    <arg name="left_cam_stereo_depth_topic" value="/depth_image"/>
+    <group if="$(arg run_stereo_dense)">
+      <arg name="pointcloud" value="/points2"/>
+      <include file="$(find kimera_semantics_ros)/launch/stereo_depth.launch">
+        <arg name="left_cam_info_topic"         value="$(arg left_cam_info_topic)"/>
+        <arg name="right_cam_info_topic"        value="$(arg right_cam_info_topic)"/>
+        <arg name="left_cam_topic"              value="$(arg left_cam_topic)"/>
+        <arg name="right_cam_topic"             value="$(arg right_cam_topic)"/>
+        <arg name="pointcloud"                  value="$(arg pointcloud)"/>
+        <arg name="disparity_image"             value="disparity"/>
+        <arg name="depth_image"                 value="$(arg left_cam_stereo_depth_topic)"/>
+        <arg name="convert_disparity_img_to_depth_img" value="true"/>
+      </include>
+    </group>
+
+    <!-- Converts registered depth image and RGB image into an RGB pointcloud.
+         Using depth and semantic image, it generates semantic pointcloud. We only
+        run this if we are not using stereo depth reconstruction instead. -->
     <node pkg="nodelet" type="nodelet" name="cloudify"
-          args="load depth_image_proc/point_cloud_xyzrgb nodelet_manager
-          -no-bond" unless="$(arg run_stereo_dense)">
+      args="load depth_image_proc/point_cloud_xyzrgb nodelet_manager
+      -no-bond" output="screen">
       <!-- Input -->
-      <remap from="rgb/camera_info"             to="/tesse/left_cam/camera_info"/>
-      <remap from="rgb/image_rect_color"        to="/tesse/segmentation/image_raw" if="$(arg metric_semantic_reconstruction)"/>
-      <remap from="rgb/image_rect_color"        to="/tesse/left_cam/image_raw" unless="$(arg metric_semantic_reconstruction)"/>
-      <remap from="depth_registered/image_rect" to="/tesse/depth/image_raw"/>
+      <remap from="rgb/camera_info"             to="$(arg left_cam_info_topic)"/>
+      <remap from="rgb/image_rect_color"        to="$(arg left_cam_segmentation_topic)" if="$(arg metric_semantic_reconstruction)"/>
+      <remap from="rgb/image_rect_color"        to="$(arg left_cam_topic)"              unless="$(arg metric_semantic_reconstruction)"/>
+      <remap from="depth_registered/image_rect" to="$(arg left_cam_stereo_depth_topic)" if="$(arg run_stereo_dense)"/>
+      <remap from="depth_registered/image_rect" to="$(arg left_cam_depth_topic)"        unless="$(arg run_stereo_dense)"/>
       <!-- Output -->
-      <remap from="depth_registered/points"     to="/points"/>
+      <remap from="depth_registered/points"     to="$(arg semantic_pointcloud)"/>
       <!-- Params -->
       <param name="queue_size" value="20"/>
     </node>
-
-     <!-- Run stereo_dense_reconstruction_node -->
-    <node ns="stereo_gray" name="stereo_image_proc" pkg="stereo_image_proc"
-      type="stereo_image_proc" clear_params="true" output="screen"
-      if="$(arg run_stereo_dense)">
-      <!-- Input -->
-      <remap from="left/image_rect_color"   to="/dev/null/left_cam"/>
-      <remap from="right/image_rect_color"  to="/dev/null/right_cam"/>
-      <remap from="left/image_raw"          to="/tesse/left_cam/image_raw"/>
-      <remap from="left/camera_info"        to="/tesse/left_cam/camera_info"/>
-      <remap from="right/image_raw"         to="/tesse/right_cam/image_raw"/>
-      <remap from="right/camera_info"       to="/tesse/right_cam/camera_info"/>
-      <!-- Output -->
-      <remap from="/stereo_gray/points2"    to="/stereo_gray/points2"/>
-      <!-- Params -->
-      <param name="approximate_sync" value="true" />
-    </node>
-
-    <!-- Recolor dense stereo pointcloud with semantic labels-->
-    <node name="pointcloud_recolor" type="pointcloud_recolor"
-      pkg="pointcloud_recolor" output="screen"
-      args="-alsologtostderr" required="true" if="$(arg run_stereo_dense)">
-      <!-- Input -->
-      <remap from="image_in"               to="/tesse/segmentation/image_raw" if="$(arg metric_semantic_reconstruction)"/>
-      <remap from="image_in"               to="/tesse/left_cam/image_raw" unless="$(arg metric_semantic_reconstruction)"/>
-      <remap from="pointcloud_in"          to="/stereo_gray/points2"/>
-      <!-- Output -->
-      <remap from="pointcloud_recolor_out" to="/points"/>
-    </node>
   </group>
 
-  <arg name="pkg_type" default="kimera_semantics_ros" if="$(arg metric_semantic_reconstruction)"/>
+  <arg name="pkg_type"    default="kimera_semantics_ros"  if="$(arg metric_semantic_reconstruction)"/>
   <arg name="server_type" default="kimera_semantics_node" if="$(arg metric_semantic_reconstruction)"/>
-  <arg name="pkg_type" default="voxblox_ros" unless="$(arg metric_semantic_reconstruction)"/>
+  <arg name="pkg_type"    default="voxblox_ros" unless="$(arg metric_semantic_reconstruction)"/>
   <arg name="server_type" default="tsdf_server" unless="$(arg metric_semantic_reconstruction)"/>
   <node name="kimera_semantics_node" pkg="$(arg pkg_type)" type="$(arg server_type)" output="screen"
     args="-alsologtostderr -colorlogtostderr" clear_params="true">
     <!-- Input -->
-    <remap from="pointcloud" to="/points"/>
+    <remap from="pointcloud"                to="$(arg semantic_pointcloud)"/>
     <!-- Params -->
     <param name="tsdf_voxel_size"           value="$(arg voxel_size)" />
     <param name="tsdf_voxels_per_side"      value="32" />
