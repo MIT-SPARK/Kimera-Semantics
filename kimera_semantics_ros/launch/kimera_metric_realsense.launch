@@ -13,11 +13,34 @@
   <arg name="sensor_frame" value="left_cam"/>
 
   <!-- Subscribed Topics -->
-  <arg name="left_cam_depth_topic"         value="/camera/depth/image_rect_raw"/>
-  <arg name="left_cam_info_topic"         value="/camera/infra1/camera_info"/>
-  <arg name="left_cam_topic"              value="/camera/infra1/image_rect_raw"/>
+  <arg name="left_cam_info_topic"       default="/camera/infra1/camera_info"/>
+  <arg name="left_cam_topic"            default="/camera/infra1/image_rect_raw"/>
+  <arg name="left_cam_depth_topic" 	default="/depth_cam_in_rgb_frame"/>
 
   <!-- Launch actual pipeline -->
   <include file="$(find kimera_semantics_ros)/launch/kimera_semantics.launch"
            pass_all_args="true"/>
+
+  <!-- Additional topics necessary for transforming to RGB frame -->
+  <arg name="depth_cam_info_topic"      default="/camera/depth/camera_info"/>
+  <arg name="depth_cam_topic"         	default="/camera/depth/image_rect_raw"/>
+  <arg name="left_cam_depth_topic_info" default="/depth_info_in_rgb_frame"/>
+
+  <!-- Get the scene depth image transformed to the rgb camera frame -->
+  <node pkg="nodelet" type="nodelet" name="transform_scenedepth2rgb"
+  args="load depth_image_proc/register depth_transforms_manager --no-bond">
+
+   <!-- Input: RGB camera calibration and metadata. (sensor_msgs/CameraInfo) -->
+   <remap from="rgb/camera_info" to="$(arg left_cam_info_topic)"/> 
+   <!-- Input: Depth camera calibration and metadata. (sensor_msgs/CameraInfo) -->
+   <remap from="depth/camera_info" to="$(arg depth_cam_info_topic)"/> 
+   <!-- Input: Rectified depth image. (sensor_msgs/Image) -->
+   <remap from="depth/image_rect" to="$(arg depth_cam_topic)"/>
+
+   <!-- Output: Camera calibration and metadata. Same as rgb/camera_info but time-synced 
+   to depth_registered/image_rect. (sensor_msgs/CameraInfo)   -->
+   <remap from="depth_registered/camera_info" to="$(arg left_cam_depth_topic_info)"/>
+   <!-- Output: Reprojected depth image in the RGB camera frame. -->
+   <remap from="depth_registered/image_rect" to="$(arg left_cam_depth_topic)"/> 
+  </node>
 </launch>
