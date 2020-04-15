@@ -17,10 +17,6 @@
   <arg name="left_cam_topic"            default="/camera/infra1/image_rect_raw"/>
   <arg name="left_cam_depth_topic" 	default="/depth_cam_in_rgb_frame"/>
 
-  <!-- Launch actual pipeline -->
-  <include file="$(find kimera_semantics_ros)/launch/kimera_semantics.launch"
-           pass_all_args="true"/>
-
   <!-- Additional topics necessary for transforming to RGB frame -->
   <arg name="depth_cam_info_topic"      default="/camera/depth/camera_info"/>
   <arg name="depth_cam_topic"         	default="/camera/depth/image_rect_raw"/>
@@ -28,7 +24,7 @@
 
   <!-- Get the scene depth image transformed to the rgb camera frame -->
   <node pkg="nodelet" type="nodelet" name="transform_scenedepth2rgb"
-  args="load depth_image_proc/register depth_transforms_manager --no-bond">
+  args="load depth_image_proc/register nodelet_manager --no-bond">
 
    <!-- Input: RGB camera calibration and metadata. (sensor_msgs/CameraInfo) -->
    <remap from="rgb/camera_info" to="$(arg left_cam_info_topic)"/> 
@@ -43,4 +39,18 @@
    <!-- Output: Reprojected depth image in the RGB camera frame. -->
    <remap from="depth_registered/image_rect" to="$(arg left_cam_depth_topic)"/> 
   </node>
+
+
+  <!-- Launch actual pipeline -->
+  <include file="$(find kimera_semantics_ros)/launch/kimera_semantics.launch">
+   <!-- Settings -->
+   <arg name="metric_semantic_reconstruction" value="$(arg metric_semantic_reconstruction)"/>
+   <arg name="should_use_sim_time" value="$(arg should_use_sim_time)"/>
+   <arg name="sensor_frame" value="$(arg sensor_frame)"/>
+
+   <!-- Subscribed Topics -->
+   <arg name="left_cam_info_topic"       value="$(arg left_cam_info_topic)"/>
+   <arg name="left_cam_topic"            value="$(arg left_cam_topic)"/>
+   <arg name="left_cam_depth_topic" 	value="$(arg left_cam_depth_topic)"/>   
+  </include>
 </launch>
