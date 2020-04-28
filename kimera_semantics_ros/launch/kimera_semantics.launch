@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="ISO-8859-15"?>
 <launch>
-  <arg name="voxel_size"     default="0.05"/>
-  <param name="use_sim_time" value="true" />
+  <arg name="voxel_size"       default="0.05"/>
+  <arg name="max_ray_length_m" default="5"/>
+  <param name="use_sim_time"   value="true" />
 
   <!-- Change sensor frame to:
    - 1. VIO's estimated base_link: `left_cam_base_link`
@@ -34,6 +35,8 @@
   <arg name="right_cam_topic"             default="/tesse/right_cam/image_raw"/>
   <arg name="left_cam_segmentation_topic" default="/tesse/segmentation/image_raw"/>
   <arg name="left_cam_depth_topic"        default="/tesse/depth/image_raw"/>
+  <arg name="use_freespace_pointcloud"    default="false" />
+  <arg name="freespace_pointcloud"        default="/dev/null"/>
 
   <!-- Generate input pointcloud with semantic labels for kimera-semantics:
      - 1. Using the depth image and registered semantic image (run_stereo_dense=false).
@@ -88,14 +91,17 @@
     args="-alsologtostderr -colorlogtostderr" clear_params="true">
     <!-- Input -->
     <remap from="pointcloud"                to="$(arg semantic_pointcloud)"/>
+
     <!-- Params -->
     <param name="tsdf_voxel_size"           value="$(arg voxel_size)" />
-    <param name="tsdf_voxels_per_side"      value="32" />
-    <param name="max_ray_length_m"          value="15.0" />
+    <param name="tsdf_voxels_per_side"      value="16" />
+    <param name="max_ray_length_m"          value="$(arg max_ray_length_m)" />
     <param name="min_time_between_msgs_sec" value="0.2" />
     <param name="voxel_carving_enabled"     value="true" />
     <param name="color_mode"                value="lambert_color"/>
     <param name="use_const_weight"          value="false" />
+    <param name="use_freespace_pointcloud"  value="$(arg use_freespace_pointcloud)" />
+    <remap from="freespace_pointcloud"      to="$(arg freespace_pointcloud)"/>
 
     <param name="sensor_frame"              value="$(arg sensor_frame)"/>
     <param name="use_tf_transforms"         value="true" />

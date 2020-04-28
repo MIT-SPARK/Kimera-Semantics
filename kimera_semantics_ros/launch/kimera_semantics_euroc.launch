@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="ISO-8859-15"?>
+<launch>
+  <arg name="voxel_size"     default="0.10"/>
+  <arg name="max_ray_length_m" default="5"/>
+  <param name="use_sim_time" value="true" />
+
+  <!-- We use VIO's estimated base_link: `left_cam_base_link` -->
+  <arg name="sensor_frame" default="cam0"/>
+
+  <!-- If you want to play directly from a rosbag -->
+  <arg name="play_bag" default="false"/>
+  <!-- Let's go at twice real-time to show the speed! It can go faster, but then rviz struggles. -->
+  <arg name="rosbag_rate" default="2.0"/>
+  <arg name="bag_file" default="$(find kimera_semantics_ros)/rosbags/kimera_semantics_demo.bag"/>
+
+  <!-- We just want to run metric reconstruction -->
+  <arg name="metric_semantic_reconstruction" default="false"/>
+
+  <!-- Input -->
+  <arg name="semantic_pointcloud"         default="/stereo_gray/dense_stereo/pointcloud"/>
+  <!-- Only used for dense stereo depth, but we do that in Kimera VIO ROS -->
+  <arg name="left_cam_info_topic"         default="/cam0/camera_info"/>
+  <arg name="right_cam_info_topic"        default="/cam1/camera_info"/>
+  <arg name="left_cam_topic"              default="/cam0/image_raw"/>
+  <arg name="right_cam_topic"             default="/cam1/image_raw"/>
+  <!-- We don't have semantics in Euroc -->
+  <arg name="left_cam_segmentation_topic" default="/dev/null"/>
+  <!-- We don't use a depth topic, but a pointcloud directly -->
+  <arg name="left_cam_depth_topic"        default="/dev/null"/>
+  <arg name="use_freespace_pointcloud"    default="true" />
+  <arg name="freespace_pointcloud"        default="/stereo_gray/dense_stereo/freespace_pointcloud"/>
+
+  <!-- We don't need to run stereo depth or publish point clouds since it is done in Kimera VIO ROS already.
+       So we just need to subscribe in "semantic_pointcloud" to the actual pointcloud from Kimera VIO ROS -->
+  <arg name="publish_point_clouds" default="false"/>
+  <arg name="run_stereo_dense"     default="false"/>
+
+  <arg name="pkg_type"    default="kimera_semantics_ros"  if="$(arg metric_semantic_reconstruction)"/>
+  <arg name="server_type" default="kimera_semantics_node" if="$(arg metric_semantic_reconstruction)"/>
+  <arg name="pkg_type"    default="voxblox_ros" unless="$(arg metric_semantic_reconstruction)"/>
+  <arg name="server_type" default="tsdf_server" unless="$(arg metric_semantic_reconstruction)"/>
+
+  <include file="$(find kimera_semantics_ros)/launch/kimera_semantics.launch" pass_all_args="true"/>
+</launch>
