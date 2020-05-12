@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="ISO-8859-15"?>
 <launch>
   <arg name="voxel_size"     default="0.05"/>
-  <param name="use_sim_time" value="true" />
+  <arg name="should_use_sim_time" default="true" />
+  <param name="use_sim_time" value="$(arg should_use_sim_time)" />
 
   <!-- Change sensor frame to:
    - 1. VIO's estimated base_link: `left_cam_base_link`
