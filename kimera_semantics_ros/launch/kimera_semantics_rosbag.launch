@@ -7,7 +7,11 @@
    - 1. VIO's estimated base_link: `left_cam_base_link`
    - 2. Or, if you want to use simulator's ground-truth: `left_cam`
   -->
-  <arg name="sensor_frame" default="left_cam"/>
+  <arg name="sensor_frame"       default="left_cam"/>
+  <!-- base_link_gt_frame is used to get the static tf between the base_link
+  and the sensor_frame -->
+  <arg name="base_link_gt_frame" default="base_link_gt"/>
+  <arg name="base_link_frame"    default="base_link_DVIO"/>
 
   <arg name="rosbag_path" default="/home/tonirv/datasets/uHumans2/apartment_scene/uHumans2_apartment_s1_00h.bag"/>
 
@@ -39,6 +43,9 @@
     <remap from="freespace_pointcloud"      to="$(arg freespace_pointcloud)"/>
 
     <param name="sensor_frame"              value="$(arg sensor_frame)"/>
+    <param name="base_link_gt_frame"        value="$(arg base_link_gt_frame)"/>
+    <param name="base_link_frame"           value="$(arg base_link_frame)"/>
+    <param name="world_frame"               value="world"/>
 
     <param name="enable_icp"                value="false" />
     <param name="icp_iterations"            value="10" />
