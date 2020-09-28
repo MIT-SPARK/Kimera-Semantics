@@ -17,6 +17,8 @@
 #include <rosbag/view.h>
 #include <sensor_msgs/CameraInfo.h>
 #include <sensor_msgs/Image.h>
+#include <tf2_msgs/TFMessage.h>
+#include <tf/transform_listener.h>
 
 namespace kimera {
 
@@ -26,6 +28,8 @@ struct RosbagData {
   std::vector<sensor_msgs::ImageConstPtr> depth_imgs_;
   std::vector<sensor_msgs::ImageConstPtr> semantic_imgs_;
   sensor_msgs::CameraInfoConstPtr cam_info_;
+  tf::StampedTransform camera_to_base_link_tf_static_;
+  tf::TransformListener tf_listener_;
 };
 
 class RosbagDataProvider {
@@ -57,15 +61,21 @@ public:
   ros::NodeHandle nh_;
   ros::NodeHandle nh_private_;
 
-
+  // Topics
   std::string rosbag_path_;
   std::string depth_imgs_topic_;
   std::string semantic_imgs_topic_;
   std::string left_cam_info_topic_;
 
+  // Publishers
   ros::Publisher clock_pub_;
   ros::Publisher depth_img_pub_;
   ros::Publisher semantic_img_pub_;
+
+  // Frame IDs
+  std::string sensor_frame_id_;
+  std::string base_link_gt_frame_id_;
+  std::string world_frame_id_;
 
   Timestamp timestamp_last_frame_;
   Timestamp timestamp_last_kf_;

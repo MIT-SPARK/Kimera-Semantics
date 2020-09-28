@@ -8,6 +8,9 @@
 
 #include <glog/logging.h>
 
+#include <tf/transform_datatypes.h>
+#include <tf_conversions/tf_eigen.h>
+
 #include <rosgraph_msgs/Clock.h>
 
 namespace kimera {
@@ -33,6 +36,10 @@ RosbagDataProvider::RosbagDataProvider()
   CHECK(nh_private_.getParam("depth_cam_topic", depth_imgs_topic_));
   CHECK(nh_private_.getParam("semantic_cam_topic", semantic_imgs_topic_));
   CHECK(nh_private_.getParam("left_cam_info_topic", left_cam_info_topic_));
+
+  CHECK(nh_private_.getParam("sensor_frame", sensor_frame_id_));
+  CHECK(nh_private_.getParam("base_link_gt_frame", base_link_gt_frame_id_));
+  CHECK(nh_private_.getParam("world_frame", world_frame_id_));
 
   LOG(INFO) << "Constructing RosbagDataProvider from path: \n"
             << " - Rosbag Path: " << rosbag_path_.c_str() << '\n'
@@ -76,17 +83,16 @@ bool RosbagDataProvider::parseRosbag(const std::string& bag_path,
   topics.push_back(depth_imgs_topic_);
   topics.push_back(semantic_imgs_topic_);
   topics.push_back(left_cam_info_topic_);
+  topics.push_back("/tf");
+  topics.push_back("/tf_static");
 
   // Query rosbag for given topics
   rosbag::View view(bag, rosbag::TopicQuery(topics));
 
   // For some datasets, we have duplicated measurements for the same time.
-  size_t kMaxMsgs = 101;
-  size_t i = 0;
+  static constexpr bool kEarlyStopForDebug = true;
   for (const rosbag::MessageInstance& msg : view) {
-    if (i > kMaxMsgs) break;
-    i++;
-
+    if (!nh_.ok() || !ros::ok() || ros::isShuttingDown()) return false;
     LOG(INFO) << "Rosbag processing: " << msg.getTime() - view.getBeginTime()
               << " / " << view.getEndTime() - view.getBeginTime();
 
@@ -103,22 +109,51 @@ bool RosbagDataProvider::parseRosbag(const std::string& bag_path,
       } else {
         LOG(WARNING) << "Img with unexpected topic: " << msg_topic;
       }
+      if (kEarlyStopForDebug &&
+          rosbag_data->depth_imgs_.size() ==
+              rosbag_data->semantic_imgs_.size() &&
+          rosbag_data->depth_imgs_.size() >= 1000u) {
+        LOG(ERROR) << "Early break.";
+        break;
+      }
       continue;
     }
 
-    sensor_msgs::CameraInfoConstPtr cam_info =
+    tf2_msgs::TFMessagePtr tf_msg = msg.instantiate<tf2_msgs::TFMessage>();
+    if (tf_msg != nullptr) {
+      if (msg_topic == "/tf") {
+        LOG_EVERY_N(ERROR, 1000) << "GOT TF";
+      } else {
+        CHECK_EQ(msg_topic, "/tf_static");
+      }
+      for (const geometry_msgs::TransformStamped& transform_stamped :
+           tf_msg->transforms) {
+        LOG_EVERY_N(ERROR, 1000) << "Storing TFs";
+        // It may be the case that we only have base_link to world_frame,
+        // and then we need to apply tf from base_link to depth_cam...
+        tf::StampedTransform tf;
+        tf::transformStampedMsgToTF(transform_stamped, tf);
+        if (transform_stamped.child_frame_id == sensor_frame_id_ &&
+            transform_stamped.header.frame_id == base_link_gt_frame_id_) {
+          rosbag_data_.camera_to_base_link_tf_static_ = tf;
+        } else {
+          rosbag_data_.tf_listener_.setTransform(tf);
+        }
+      }
+      continue;
+    }
+
+    sensor_msgs::CameraInfoConstPtr cam_info_msg =
         msg.instantiate<sensor_msgs::CameraInfo>();
-    if (cam_info != nullptr) {
+    if (cam_info_msg != nullptr) {
       if (msg_topic == left_cam_info_topic_) {
-        rosbag_data->cam_info_ = cam_info;
+        rosbag_data->cam_info_ = cam_info_msg;
       }
       continue;
     } else {
       LOG(ERROR) << "Could not find the type of this rosbag msg from topic:\n"
                  << msg_topic;
     }
-
-    if (!ros::ok()) return false;
   }
   bag.close();
 
