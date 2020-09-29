@@ -246,10 +246,20 @@ bool lookupTransformTf(const tf::TransformListener& tf_listener,
   CHECK_NOTNULL(transform);
   tf::StampedTransform tf_transform;
 
+  LOG_IF(ERROR, tf_listener.frameExists(from_frame))
+      << "Frame id: " << from_frame << " does not exist in TF tree.";
+  LOG_IF(ERROR, tf_listener.frameExists(to_frame))
+      << "Frame id: " << to_frame << " does not exist in TF tree.";
+
+  // to_frame === target_frame, from_frame === source_frame
   if (!tf_listener.canTransform(to_frame, from_frame, timestamp)) {
     LOG(ERROR) << "Can't find transform from frame " << from_frame.c_str()
                << " to frame " << to_frame.c_str() << " at time "
                << timestamp.toNSec();
+    LOG_IF(ERROR, !tf_listener.canTransform(from_frame, to_frame, timestamp))
+        << "NOR it can find transform from frame " << to_frame.c_str()
+        << " to frame " << from_frame.c_str() << " at time "
+        << timestamp.toNSec();
     return false;
   }
 
@@ -282,6 +292,9 @@ int main(int argc, char** argv) {
   CHECK(nh_private.getParam("base_link_frame", base_link_frame_id_));
   CHECK(nh_private.getParam("world_frame", world_frame_id_));
 
+  std::string tsdf_filename;
+  CHECK(nh_private.getParam("tsdf_filename", tsdf_filename));
+
   kimera::SemanticTsdfServer node(nh, nh_private);
   kimera::RosbagDataProvider rosbag;
   rosbag.initialize();
@@ -310,18 +323,19 @@ int main(int argc, char** argv) {
 
     // Feed semantic pointcloud to KS.
     voxblox::Transformation T_G_B;
-    LOG_IF(ERROR,
-           !kimera::lookupTransformTf(rosbag.rosbag_data_.tf_listener_,
-                                      world_frame_id_,
-                                      base_link_frame_id_,
-                                      depth_img->header.stamp,
-                                      &T_G_B))
-        << "Couldn't find tf for given pointcloud...";
-    voxblox::Transformation T_B_C;
-    tf::transformTFToKindr(rosbag.rosbag_data_.camera_to_base_link_tf_static_,
-                           &T_B_C);
-    voxblox::Transformation T_G_C = T_G_B * T_B_C;
-    node.processPointCloudMessageAndInsert(pcl, T_G_C, false);
+    if (kimera::lookupTransformTf(rosbag.rosbag_data_.tf_listener_,
+                                  world_frame_id_,
+                                  base_link_frame_id_,
+                                  depth_img->header.stamp,
+                                  &T_G_B)) {
+      voxblox::Transformation T_B_C;
+      tf::transformTFToKindr(rosbag.rosbag_data_.camera_to_base_link_tf_static_,
+                             &T_B_C);
+      voxblox::Transformation T_G_C = T_G_B * T_B_C;
+      node.processPointCloudMessageAndInsert(pcl, T_G_C, false);
+    } else {
+      LOG(ERROR) << "Couldn't find tf for given pointcloud...";
+    }
 
     if (!ros::ok()) {
       LOG(ERROR) << "ROS died, finishing KS processing.";
@@ -331,9 +345,10 @@ int main(int argc, char** argv) {
     }
   }
 
-  // node.generateMesh();  // creates the ply
-  // std::string path;
-  // node.saveMap(path);  // creates the .tsdf
+  // Generates mesh and saves the ply file if mesh_filename ROS param is given
+  node.generateMesh();
+  // Saves the TSDF layer
+  node.saveMap(tsdf_filename);
 
   ros::spin();
 

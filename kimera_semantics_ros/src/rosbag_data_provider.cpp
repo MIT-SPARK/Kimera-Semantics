@@ -90,7 +90,7 @@ bool RosbagDataProvider::parseRosbag(const std::string& bag_path,
   rosbag::View view(bag, rosbag::TopicQuery(topics));
 
   // For some datasets, we have duplicated measurements for the same time.
-  static constexpr bool kEarlyStopForDebug = true;
+  static constexpr bool kEarlyStopForDebug = false;
   for (const rosbag::MessageInstance& msg : view) {
     if (!nh_.ok() || !ros::ok() || ros::isShuttingDown()) return false;
     LOG(INFO) << "Rosbag processing: " << msg.getTime() - view.getBeginTime()
@@ -112,7 +112,7 @@ bool RosbagDataProvider::parseRosbag(const std::string& bag_path,
       if (kEarlyStopForDebug &&
           rosbag_data->depth_imgs_.size() ==
               rosbag_data->semantic_imgs_.size() &&
-          rosbag_data->depth_imgs_.size() >= 1000u) {
+          rosbag_data->depth_imgs_.size() >= 300u) {
         LOG(ERROR) << "Early break.";
         break;
       }

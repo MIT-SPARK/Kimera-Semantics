@@ -69,5 +69,6 @@
     <param name="publish_pointclouds"     value="false"/>
     <param name="update_mesh_every_n_sec" value="0.1" />
     <param name="mesh_filename"           value="$(find kimera_semantics_ros)/mesh_results/$(anon tesse).ply" />
+    <param name="tsdf_filename"           value="$(find kimera_semantics_ros)/mesh_results/$(anon tesse).tsdf" />
   </node>
 </launch>
