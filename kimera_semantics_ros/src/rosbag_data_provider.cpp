@@ -4,10 +4,12 @@
  * @author Antoni Rosinol
  */
 
+#include "kimera_semantics/common.h"
 #include "kimera_semantics_ros/rosbag_data_provider.h"
 
 #include <glog/logging.h>
 
+#include <tf/transform_listener.h>
 #include <tf/transform_datatypes.h>
 #include <tf_conversions/tf_eigen.h>
 
@@ -18,7 +20,7 @@ namespace kimera {
 RosbagDataProvider::RosbagDataProvider()
     : nh_(),
       nh_private_("~"),
-      rosbag_data_(),
+      rosbag_data_(nullptr),
       rosbag_path_(""),
       depth_imgs_topic_(""),
       semantic_imgs_topic_(""),
@@ -66,13 +68,12 @@ void RosbagDataProvider::initialize() {
   CHECK_EQ(k_, 0u);
   LOG(INFO) << "Initialize Rosbag Data Provider.";
   // Parse data from rosbag first thing:
-  CHECK(parseRosbag(rosbag_path_, &rosbag_data_));
+  CHECK(parseRosbag(rosbag_path_));
 }
 
-bool RosbagDataProvider::parseRosbag(const std::string& bag_path,
-                                     RosbagData* rosbag_data) {
+bool RosbagDataProvider::parseRosbag(const std::string& bag_path) {
   LOG(INFO) << "Parsing rosbag data.";
-  CHECK_NOTNULL(rosbag_data);
+
 
   // Fill in rosbag to data_
   rosbag::Bag bag;
@@ -89,12 +90,15 @@ bool RosbagDataProvider::parseRosbag(const std::string& bag_path,
   // Query rosbag for given topics
   rosbag::View view(bag, rosbag::TopicQuery(topics));
 
+  ros::Duration rosbag_duration = view.getEndTime() - view.getBeginTime();
+  rosbag_data_ = kimera::make_unique<RosbagData>(rosbag_duration);
+
   // For some datasets, we have duplicated measurements for the same time.
   static constexpr bool kEarlyStopForDebug = false;
   for (const rosbag::MessageInstance& msg : view) {
     if (!nh_.ok() || !ros::ok() || ros::isShuttingDown()) return false;
     LOG(INFO) << "Rosbag processing: " << msg.getTime() - view.getBeginTime()
-              << " / " << view.getEndTime() - view.getBeginTime();
+              << " / " << rosbag_duration;
 
     const std::string& msg_topic = msg.getTopic();
 
@@ -103,16 +107,16 @@ bool RosbagDataProvider::parseRosbag(const std::string& bag_path,
     if (img_msg != nullptr) {
       // Check left or right image.
       if (msg_topic == depth_imgs_topic_) {
-        rosbag_data->depth_imgs_.push_back(img_msg);
+        rosbag_data_->depth_imgs_.push_back(img_msg);
       } else if (msg_topic == semantic_imgs_topic_) {
-        rosbag_data->semantic_imgs_.push_back(img_msg);
+        rosbag_data_->semantic_imgs_.push_back(img_msg);
       } else {
         LOG(WARNING) << "Img with unexpected topic: " << msg_topic;
       }
       if (kEarlyStopForDebug &&
-          rosbag_data->depth_imgs_.size() ==
-              rosbag_data->semantic_imgs_.size() &&
-          rosbag_data->depth_imgs_.size() >= 300u) {
+          rosbag_data_->depth_imgs_.size() ==
+              rosbag_data_->semantic_imgs_.size() &&
+          rosbag_data_->depth_imgs_.size() >= 300u) {
         LOG(ERROR) << "Early break.";
         break;
       }
@@ -135,9 +139,9 @@ bool RosbagDataProvider::parseRosbag(const std::string& bag_path,
         tf::transformStampedMsgToTF(transform_stamped, tf);
         if (transform_stamped.child_frame_id == sensor_frame_id_ &&
             transform_stamped.header.frame_id == base_link_gt_frame_id_) {
-          rosbag_data_.camera_to_base_link_tf_static_ = tf;
+          rosbag_data_->camera_to_base_link_tf_static_ = tf;
         } else {
-          rosbag_data_.tf_listener_.setTransform(tf);
+          rosbag_data_->tf_listener_.setTransform(tf);
         }
       }
       continue;
@@ -147,7 +151,7 @@ bool RosbagDataProvider::parseRosbag(const std::string& bag_path,
         msg.instantiate<sensor_msgs::CameraInfo>();
     if (cam_info_msg != nullptr) {
       if (msg_topic == left_cam_info_topic_) {
-        rosbag_data->cam_info_ = cam_info_msg;
+        rosbag_data_->cam_info_ = cam_info_msg;
       }
       continue;
     } else {
@@ -158,12 +162,12 @@ bool RosbagDataProvider::parseRosbag(const std::string& bag_path,
   bag.close();
 
   // Sanity check:
-  LOG_IF(FATAL, rosbag_data->depth_imgs_.size() == 0)
+  LOG_IF(FATAL, rosbag_data_->depth_imgs_.size() == 0)
       << "No depth images parsed from rosbag.";
-  LOG_IF(FATAL, rosbag_data->semantic_imgs_.size() == 0)
+  LOG_IF(FATAL, rosbag_data_->semantic_imgs_.size() == 0)
       << "No semantic images  parsed from rosbag.";
   LOG_IF(FATAL,
-         rosbag_data->depth_imgs_.size() != rosbag_data->semantic_imgs_.size())
+         rosbag_data_->depth_imgs_.size() != rosbag_data_->semantic_imgs_.size())
       << "Unequal number of depth and semantic images.";
   LOG(INFO) << "Finished parsing rosbag data.";
   return true;
@@ -182,15 +186,15 @@ void RosbagDataProvider::publishClock(const Timestamp& timestamp) const {
 
 void RosbagDataProvider::publishInputs(const Timestamp& timestamp_kf) {
   // Publish left and right images:
-  if (k_last_kf_ < rosbag_data_.depth_imgs_.size() &&
-      k_last_kf_ < rosbag_data_.semantic_imgs_.size()) {
+  if (k_last_kf_ < rosbag_data_->depth_imgs_.size() &&
+      k_last_kf_ < rosbag_data_->semantic_imgs_.size()) {
     while (timestamp_last_kf_ < timestamp_kf &&
-           k_last_kf_ < rosbag_data_.depth_imgs_.size() &&
-           k_last_kf_ < rosbag_data_.semantic_imgs_.size()) {
-      depth_img_pub_.publish(rosbag_data_.depth_imgs_.at(k_last_kf_));
-      semantic_img_pub_.publish(rosbag_data_.semantic_imgs_.at(k_last_kf_));
+           k_last_kf_ < rosbag_data_->depth_imgs_.size() &&
+           k_last_kf_ < rosbag_data_->semantic_imgs_.size()) {
+      depth_img_pub_.publish(rosbag_data_->depth_imgs_.at(k_last_kf_));
+      semantic_img_pub_.publish(rosbag_data_->semantic_imgs_.at(k_last_kf_));
       timestamp_last_kf_ =
-          rosbag_data_.depth_imgs_.at(k_last_kf_)->header.stamp;
+          rosbag_data_->depth_imgs_.at(k_last_kf_)->header.stamp;
       k_last_kf_++;
     }
   }

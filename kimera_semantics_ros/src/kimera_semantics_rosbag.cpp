@@ -246,26 +246,45 @@ bool lookupTransformTf(const tf::TransformListener& tf_listener,
   CHECK_NOTNULL(transform);
   tf::StampedTransform tf_transform;
 
-  LOG_IF(ERROR, tf_listener.frameExists(from_frame))
+  LOG_IF(ERROR, !tf_listener.frameExists(from_frame))
       << "Frame id: " << from_frame << " does not exist in TF tree.";
-  LOG_IF(ERROR, tf_listener.frameExists(to_frame))
+  LOG_IF(ERROR, !tf_listener.frameExists(to_frame))
       << "Frame id: " << to_frame << " does not exist in TF tree.";
 
   // to_frame === target_frame, from_frame === source_frame
-  if (!tf_listener.canTransform(to_frame, from_frame, timestamp)) {
+  std::string error_msg;
+  if (!tf_listener.canTransform(to_frame, from_frame, timestamp, &error_msg)) {
     LOG(ERROR) << "Can't find transform from frame " << from_frame.c_str()
                << " to frame " << to_frame.c_str() << " at time "
-               << timestamp.toNSec();
-    LOG_IF(ERROR, !tf_listener.canTransform(from_frame, to_frame, timestamp))
+               << timestamp.toSec() << '\n'
+               << "Error is: \n"
+               << error_msg.c_str();
+    LOG_IF(
+        ERROR,
+        !tf_listener.canTransform(from_frame, to_frame, timestamp, &error_msg))
         << "NOR it can find transform from frame " << to_frame.c_str()
         << " to frame " << from_frame.c_str() << " at time "
-        << timestamp.toNSec();
+        << timestamp.toSec() << '\n'
+        << "Error is: \n"
+        << error_msg.c_str();
     return false;
   }
 
   try {
     tf_listener.lookupTransform(to_frame, from_frame, timestamp, tf_transform);
   } catch (tf::TransformException& ex) {
+    LOG(ERROR) << "Error getting TF transform from sensor data: " << ex.what();
+    return false;
+  } catch (tf::LookupException& ex) {
+    LOG(ERROR) << "Error getting TF transform from sensor data: " << ex.what();
+    return false;
+  } catch (tf::ConnectivityException& ex) {
+    LOG(ERROR) << "Error getting TF transform from sensor data: " << ex.what();
+    return false;
+  } catch (tf::ExtrapolationException& ex) {
+    LOG(ERROR) << "Error getting TF transform from sensor data: " << ex.what();
+    return false;
+  } catch (tf2::InvalidArgumentException& ex) {
     LOG(ERROR) << "Error getting TF transform from sensor data: " << ex.what();
     return false;
   }
@@ -298,21 +317,32 @@ int main(int argc, char** argv) {
   kimera::SemanticTsdfServer node(nh, nh_private);
   kimera::RosbagDataProvider rosbag;
   rosbag.initialize();
+  CHECK_NOTNULL(rosbag.rosbag_data_);
+  LOG(ERROR) << "All tfs as  STRING: \n"
+             << rosbag.rosbag_data_->tf_listener_.allFramesAsString();
+  LOG(ERROR) << "TF Listener Cached Length: "
+             << rosbag.rosbag_data_->tf_listener_.getCacheLength().toSec();
 
   kimera::PointCloudFromDepth pcl_from_depth;
   const sensor_msgs::CameraInfoConstPtr& cam_info =
-      rosbag.rosbag_data_.cam_info_;
+      rosbag.rosbag_data_->cam_info_;
 
   ros::Publisher pcl_pub;
   pcl_pub = nh.advertise<kimera::PointCloud>("pcl", 10, true);
 
-  size_t n = rosbag.rosbag_data_.depth_imgs_.size();
+  size_t n = rosbag.rosbag_data_->depth_imgs_.size();
+  CHECK_EQ(rosbag.rosbag_data_->depth_imgs_.size(),
+           rosbag.rosbag_data_->semantic_imgs_.size());
   for (size_t i = 0u; i < n; i++) {
     LOG(INFO) << "Processing pointcloud: " << i << " / " << n;
     const sensor_msgs::ImageConstPtr& depth_img =
-        rosbag.rosbag_data_.depth_imgs_.at(i);
+        rosbag.rosbag_data_->depth_imgs_.at(i);
     const sensor_msgs::ImageConstPtr& semantic_img =
-        rosbag.rosbag_data_.semantic_imgs_.at(i);
+        rosbag.rosbag_data_->semantic_imgs_.at(i);
+    CHECK_EQ(depth_img->header.stamp, semantic_img->header.stamp)
+        << "Depth and Semantic Img timestamps do not match:\n"
+        << "- Depth timestamp: " << depth_img->header.stamp.toSec() << '\n'
+        << "- Semantic timestamp: " << semantic_img->header.stamp.toSec();
     // Programatically build the semantic pointcloud
     kimera::PointCloud::Ptr pcl =
         pcl_from_depth.imageCb(depth_img, semantic_img, cam_info);
@@ -323,13 +353,13 @@ int main(int argc, char** argv) {
 
     // Feed semantic pointcloud to KS.
     voxblox::Transformation T_G_B;
-    if (kimera::lookupTransformTf(rosbag.rosbag_data_.tf_listener_,
-                                  world_frame_id_,
+    if (kimera::lookupTransformTf(rosbag.rosbag_data_->tf_listener_,
                                   base_link_frame_id_,
+                                  world_frame_id_,
                                   depth_img->header.stamp,
                                   &T_G_B)) {
       voxblox::Transformation T_B_C;
-      tf::transformTFToKindr(rosbag.rosbag_data_.camera_to_base_link_tf_static_,
+      tf::transformTFToKindr(rosbag.rosbag_data_->camera_to_base_link_tf_static_,
                              &T_B_C);
       voxblox::Transformation T_G_C = T_G_B * T_B_C;
       node.processPointCloudMessageAndInsert(pcl, T_G_C, false);

@@ -7,6 +7,7 @@
 #pragma once
 
 #include <functional>
+#include <numeric>
 #include <string>
 
 #include <opencv2/opencv.hpp>
@@ -17,14 +18,23 @@
 #include <rosbag/view.h>
 #include <sensor_msgs/CameraInfo.h>
 #include <sensor_msgs/Image.h>
-#include <tf2_msgs/TFMessage.h>
 #include <tf/transform_listener.h>
+#include <tf2_msgs/TFMessage.h>
 
 namespace kimera {
 
 using Timestamp = ros::Time;
 
 struct RosbagData {
+ public:
+  RosbagData(const ros::Duration& rosbag_duration)
+      : depth_imgs_(),
+        semantic_imgs_(),
+        cam_info_(),
+        camera_to_base_link_tf_static_(),
+        tf_listener_(ros::Duration(rosbag_duration)) {}
+
+ public:
   std::vector<sensor_msgs::ImageConstPtr> depth_imgs_;
   std::vector<sensor_msgs::ImageConstPtr> semantic_imgs_;
   sensor_msgs::CameraInfoConstPtr cam_info_;
@@ -43,13 +53,14 @@ class RosbagDataProvider {
    */
   void initialize();
 
-public:
-  // The parsed rosbag data, first call initialize (parse) to populate this struct
-  RosbagData rosbag_data_;
+ public:
+  // The parsed rosbag data, first call initialize (parse) to populate this
+  // struct
+  std::unique_ptr<RosbagData> rosbag_data_;
 
  private:
   // Parse rosbag data
-  bool parseRosbag(const std::string& bag_path, RosbagData* rosbag_data);
+  bool parseRosbag(const std::string& bag_path);
 
   void publishRosbagInfo(const Timestamp& timestamp);
 
