@@ -200,4 +200,4 @@ void RosbagDataProvider::publishInputs(const Timestamp& timestamp_kf) {
   }
 }
 
-}  // namespace VIO
+}  // namespace kimera
