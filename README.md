@@ -154,7 +154,7 @@ First, install Kimera-Semantics, see [instructions above](https://github.com/MIT
    
   6. Finally, in another terminal, run Rviz for visualization:
   ```bash
-  rviz -d $(rospack find kimera_semantics_ros)/rviz/kimera_vio_euroc.rviz 
+  rviz -d $(rospack find kimera_semantics_ros)/rviz/kimera_semantics_euroc.rviz 
   ```
 
   # 3. FAQ
