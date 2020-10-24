@@ -20,6 +20,7 @@
   <depend>pcl_ros</depend>
   <depend>sensor_msgs</depend>
   <depend>tf</depend>
+  <depend>image_geometry</depend>
 
   <depend>kimera_semantics</depend>
   <depend>voxblox</depend>

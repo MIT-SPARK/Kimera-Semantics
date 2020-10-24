@@ -8,12 +8,18 @@ catkin_simple()
 cs_add_library(${PROJECT_NAME}
   src/semantic_tsdf_server.cpp
   src/ros_params.cpp
+  src/rosbag_data_provider.cpp
 )
 
 cs_add_executable(kimera_semantics_node
   src/kimera_semantics_node.cpp
 )
 target_link_libraries(kimera_semantics_node ${PROJECT_NAME})
+
+cs_add_executable(kimera_semantics_rosbag
+  src/kimera_semantics_rosbag.cpp
+)
+target_link_libraries(kimera_semantics_rosbag ${PROJECT_NAME})
 
 cs_add_executable(semantic_simulator_eval
   src/semantic_simulation_eval.cpp
