@@ -103,6 +103,10 @@ source ~/catkin_ws/devel/setup.bash
 
 # 2. Usage
 
+First, install Kimera-Semantics, see [instructions above](https://github.com/MIT-SPARK/Kimera-VIO-ROS#1-installation).
+
+## In Simulation (with semantics)
+
   0. Download the [demo rosbag (click here to download)](https://drive.google.com/file/d/1SG8cfJ6JEfY2PGXcxDPAMYzCcGBEh4Qq/view?usp=sharing) and save it in: `./kimera_semantics_ros/rosbag/kimera_semantics_demo.bag`.
 
   1. As a general good practice, open a new terminal and run: `roscore`
@@ -123,6 +127,35 @@ source ~/catkin_ws/devel/setup.bash
   > `source ~/catkin_ws/devel/setup.bash # Change `bash` to the shell you use.`
 
   > Note 2: you might need to check/uncheck once the `Kimera Semantic 3D Mesh` left pane topic in rviz to visualize the mesh.
+
+## In Euroc dataset (without semantics)
+
+### With Kimera-VIO
+
+  0. Download a Euroc rosbag: for example [V1_01_easy](http://robotics.ethz.ch/~asl-datasets/ijrr_euroc_mav_dataset/vicon_room1/V1_01_easy/V1_01_easy.bag)
+  1. Install [Kimera-VIO-ROS](https://github.com/MIT-SPARK/Kimera-VIO-ROS#1-installation).
+  2. Open a new terminal, run: `roscore`
+  3. In another terminal, launch Kimera-VIO-ROS:
+  ```bash
+  roslaunch kimera_vio_ros kimera_vio_ros_euroc.launch run_stereo_dense:=true
+  ```
+   >  The flag `run_stereo_dense:=true` will do stereo dense reconstruction (using OpenCV's StereoBM algorithm).
+  
+  4. In another terminal, launch Kimera-Semantics:
+  ```bash
+  roslaunch kimera_semantics_ros kimera_semantics_euroc.launch 
+  ```
+  5. In yet another terminal, run the Euroc rosbag downloaded in step 0:
+  ```bash
+  rosbag play V1_01_easy.bag --clock
+  ```
+   > Note 1: Don't forget the `--clock` flag!
+   > Note 2: Kimera is so fast that you could also increase the rosbag rate by 3 `--rate 3` and still see a good performance (results depend on available compute power).
+   
+  6. Finally, in another terminal, run Rviz for visualization:
+  ```bash
+  rviz -d $(rospack find kimera_semantics_ros)/rviz/kimera_vio_euroc.rviz 
+  ```
 
   # 3. FAQ
 
