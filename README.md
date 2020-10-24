@@ -150,6 +150,7 @@ First, install Kimera-Semantics, see [instructions above](https://github.com/MIT
   rosbag play V1_01_easy.bag --clock
   ```
    > Note 1: Don't forget the `--clock` flag!
+   >
    > Note 2: Kimera is so fast that you could also increase the rosbag rate by 3 `--rate 3` and still see a good performance (results depend on available compute power).
    
   6. Finally, in another terminal, run Rviz for visualization:
