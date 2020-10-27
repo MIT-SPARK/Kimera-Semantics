@@ -13,7 +13,8 @@
   <arg name="base_link_gt_frame" default="base_link_gt"/>
   <arg name="base_link_frame"    default="base_link_DVIO"/>
 
-  <arg name="rosbag_path" default="/home/tonirv/datasets/uHumans2/apartment_scene/uHumans2_apartment_s1_00h.bag"/>
+  <arg name="rosbag_path" default=""/>
+  <arg name="semantic_label_2_color_csv_filename" default=""/>
 
   <!-- Input -->
   <arg name="left_cam_depth_topic"        default="/tesse/depth_cam/mono/image_raw"/>
@@ -24,7 +25,7 @@
   <arg name="freespace_pointcloud"        default="/dev/null"/>
 
   <node name="kimera_semantics_rosbag" pkg="kimera_semantics_ros"
-    type="kimera_semantics_rosbag" output="screen"
+    type="kimera_semantics_rosbag" output="screen" required="true"
     args="-alsologtostderr -colorlogtostderr" clear_params="true">
     <!-- Params for RosbagDataProvider -->
     <param name="rosbag_path"                 value="$(arg rosbag_path)"/>
@@ -64,11 +65,11 @@
     <param name="slice_level" value="1.0" />
 
     <param name="semantic_label_2_color_csv_filepath"
-    value="$(find kimera_semantics_ros)/cfg/tesse_multiscene_archviz1_segmentation_mapping.csv"/>
+    value="$(find kimera_semantics_ros)/cfg/$(arg semantic_label_2_color_csv_filename)"/>
 
     <param name="publish_pointclouds"     value="false"/>
-    <param name="update_mesh_every_n_sec" value="0.1" />
-    <param name="mesh_filename"           value="$(find kimera_semantics_ros)/mesh_results/$(anon tesse).ply" />
-    <param name="tsdf_filename"           value="$(find kimera_semantics_ros)/mesh_results/$(anon tesse).tsdf" />
+    <param name="update_mesh_every_n_sec" value="0.0" />
+    <param name="mesh_filename"           value="$(find kimera_semantics_ros)/mesh_results/mesh.ply" />
+    <param name="tsdf_filename"           value="$(find kimera_semantics_ros)/mesh_results/tsdf_esdf_layers.vxblx" />
   </node>
 </launch>
