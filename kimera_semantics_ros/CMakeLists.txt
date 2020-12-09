@@ -6,9 +6,15 @@ find_package(catkin_simple REQUIRED)
 catkin_simple()
 
 cs_add_library(${PROJECT_NAME}
-  src/semantic_tsdf_server.cpp
+  include/kimera_semantics_ros/depth_map_to_pointcloud.h
+  include/kimera_semantics_ros/ros_params.h
+  include/kimera_semantics_ros/rosbag_data_provider.h
+  include/kimera_semantics_ros/semantic_simulation_server.h
+  include/kimera_semantics_ros/semantic_tsdf_server.h
   src/ros_params.cpp
   src/rosbag_data_provider.cpp
+  src/semantic_simulation_server.cpp
+  src/semantic_tsdf_server.cpp
 )
 
 cs_add_executable(kimera_semantics_node
