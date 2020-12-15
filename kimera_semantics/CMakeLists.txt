@@ -9,7 +9,6 @@ cs_add_library(${PROJECT_NAME}
   include/kimera_semantics/color.h
   include/kimera_semantics/common.h
   include/kimera_semantics/csv_iterator.h
-  include/kimera_semantics/macros.h
   include/kimera_semantics/semantic_integrator_base.h
   include/kimera_semantics/semantic_tsdf_integrator_factory.h
   include/kimera_semantics/semantic_tsdf_integrator_fast.h
