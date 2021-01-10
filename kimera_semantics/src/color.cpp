@@ -61,7 +61,9 @@ SemanticLabel2Color::SemanticLabel2Color(const std::string& filename)
   }
   // TODO(Toni): remove
   // Assign color 255,255,255 to unknown object 0u
-  color_to_semantic_label_[HashableColor::White()] = 0u;
+  semantic_label_to_color_map_[kUnknownSemanticLabelId] =
+      HashableColor::White();
+  color_to_semantic_label_[HashableColor::White()] = kUnknownSemanticLabelId;
 }
 
 SemanticLabel SemanticLabel2Color::getSemanticLabelFromColor(
@@ -71,11 +73,11 @@ SemanticLabel SemanticLabel2Color::getSemanticLabelFromColor(
     return it->second;
   } else {
     LOG(ERROR) << "Caught an unknown color: \n"
-               << "RGB: " << std::to_string(color.r) << ' '
+               << "RGBA: " << std::to_string(color.r) << ' '
                <<  std::to_string(color.g) << ' '
                <<  std::to_string(color.b) << ' '
                <<  std::to_string(color.a);
-    return 0u; // Assign unknown label for now...
+    return kUnknownSemanticLabelId; // Assign unknown label for now...
   }
 }
 

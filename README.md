@@ -1,7 +1,7 @@
 # Kimera-Semantics
 
 <div align="center">
-    <img src="kimera/docs/media/kimera_semantics.gif">
+    <img src="docs/media/kimera_semantics.gif">
 </div>
 
 ## Release News
@@ -12,7 +12,7 @@
   you can play with both methods by changing the parameter `semantic_tsdf_integrator_type` in the [launch file](./kimera_semantics_ros/launch/kimera_semantics.launch).
   [High-res video here.](https://www.youtube.com/watch?v=ex1oMByJtyQ&feature=share&fbclid=IwAR33TB2t2SEbGTAfUbCO8pKFmJTsTjBCtWf-TAluY93BlzfSUEQbbN3GITQ)
 <div align="center">
-    <img src="kimera/docs/media/fast_vs_merged_kimera_semantics.gif">
+    <img src="docs/media/fast_vs_merged_kimera_semantics.gif">
 </div>
 
 ## Publications
@@ -20,7 +20,7 @@
 We kindly ask to cite our paper if you find this library useful:
 
 - A. Rosinol, M. Abate, Y. Chang, L. Carlone, [**Kimera: an Open-Source Library for Real-Time Metric-Semantic Localization and Mapping**](https://arxiv.org/abs/1910.02490). IEEE Intl. Conf. on Robotics and Automation (ICRA), 2020. [arXiv:1910.02490](https://arxiv.org/abs/1910.02490).
- 
+
  ```bibtex
  @InProceedings{Rosinol20icra-Kimera,
    title = {Kimera: an Open-Source Library for Real-Time Metric-Semantic Localization and Mapping},
@@ -50,7 +50,7 @@ A related work to ours is [Voxblox++](https://github.com/ethz-asl/voxblox-pluspl
 
 ## A. Prerequisities
 
-- Install ROS by following [our reference](./kimera/docs/ros_installation.md), or the official [ROS website](https://www.ros.org/install/).
+- Install ROS by following [our reference](./docs/ros_installation.md), or the official [ROS website](https://www.ros.org/install/).
 
 - Install system dependencies:
 ```bash
@@ -83,9 +83,9 @@ git clone git@github.com:MIT-SPARK/Kimera-Semantics.git
 wstool init # Use unless wstool is already initialized
 
 # For ssh:
-wstool merge Kimera-Semantics/kimera/install/kimera_semantics_ssh.rosinstall
+wstool merge Kimera-Semantics/install/kimera_semantics_ssh.rosinstall
 # For https:
-#wstool merge Kimera-Semantics/kimera/install/kimera_semantics_https.rosinstall
+#wstool merge Kimera-Semantics/install/kimera_semantics_https.rosinstall
 
 # Download and update all dependencies
 wstool update
@@ -140,10 +140,10 @@ First, install Kimera-Semantics, see [instructions above](https://github.com/MIT
   roslaunch kimera_vio_ros kimera_vio_ros_euroc.launch run_stereo_dense:=true
   ```
    >  The flag `run_stereo_dense:=true` will do stereo dense reconstruction (using OpenCV's StereoBM algorithm).
-  
+
   4. In another terminal, launch Kimera-Semantics:
   ```bash
-  roslaunch kimera_semantics_ros kimera_semantics_euroc.launch 
+  roslaunch kimera_semantics_ros kimera_semantics_euroc.launch
   ```
   5. In yet another terminal, run the Euroc rosbag downloaded in step 0:
   ```bash
@@ -152,21 +152,21 @@ First, install Kimera-Semantics, see [instructions above](https://github.com/MIT
    > Note 1: Don't forget the `--clock` flag!
    >
    > Note 2: Kimera is so fast that you could also increase the rosbag rate by 3 `--rate 3` and still see a good performance (results depend on available compute power).
-   
+
   6. Finally, in another terminal, run Rviz for visualization:
   ```bash
-  rviz -d $(rospack find kimera_semantics_ros)/rviz/kimera_semantics_euroc.rviz 
+  rviz -d $(rospack find kimera_semantics_ros)/rviz/kimera_semantics_euroc.rviz
   ```
 
   # 3. FAQ
 
   - Minkindr doesn't compile:
-  
+
     Catkin ignore the `minkindr_python` catkin package:
     `touch ~/catkin_ws/src/minkindr/minkindr_python/CATKIN_IGNORE`
 
   - How to run Kimera-Semantics without Semantics?
-  
+
     We are using Voxblox as our 3D reconstruction library, therefore, to run without semantics, simply do:
     ```bash
     roslaunch kimera_semantics_ros kimera_semantics.launch play_bag:=true metric_semantic_reconstruction:=false
@@ -183,4 +183,3 @@ roslaunch kimera_semantics_ros kimera_semantics.launch run_stereo_dense:=1
 This will publish a `/points2` topic, which you can visualize in Rviz as a 3D pointcloud.
 Alternatively, if you want to visualize the depth image, since Rviz does not provide a plugin to
 visualize a [disparity image](http://docs.ros.org/api/stereo_msgs/html/msg/DisparityImage.html), we also run a [disparity_image_proc](https://github.com/ToniRV/disparity_image_proc) nodelet that will publish the depth image to `/depth_image`.
-

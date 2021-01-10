@@ -39,11 +39,11 @@
 
   <!-- Run converter from the stereo disparity image to a depth image -->
   <group if="$(arg convert_disparity_img_to_depth_img)">
-  <include file="$(find kimera_semantics_ros)/launch/disparity_to_depth.launch">
-    <arg name="left_cam_info_topic"         value="$(arg left_cam_info_topic)"/>
-    <arg name="right_cam_info_topic"        value="$(arg right_cam_info_topic)"/>
-    <arg name="disparity_image"             value="$(arg disparity_image)"/>
-    <arg name="depth_image"                 value="$(arg depth_image)"/>
-  </include>
+    <include file="$(find kimera_semantics_ros)/launch/disparity_to_depth.launch">
+      <arg name="left_cam_info_topic"         value="$(arg left_cam_info_topic)"/>
+      <arg name="right_cam_info_topic"        value="$(arg right_cam_info_topic)"/>
+      <arg name="disparity_image"             value="$(arg disparity_image)"/>
+      <arg name="depth_image"                 value="$(arg depth_image)"/>
+    </include>
   </group>
 </launch>

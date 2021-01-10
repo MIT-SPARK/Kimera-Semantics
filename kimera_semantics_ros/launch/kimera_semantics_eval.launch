@@ -10,6 +10,7 @@
   <arg name="sensor_frame" default="left_cam"/>
 
   <!-- Send colored pointcloud with semantics to kimera_semantics for 3D segmentation -->
+  <!-- launch-prefix="gdb -ex run -args" -->
   <node name="kimera_semantics_eval_node" pkg="kimera_semantics_ros"
     type="semantic_simulator_eval" output="screen"
     args="-alsologtostderr -colorlogtostderr" clear_params="true">

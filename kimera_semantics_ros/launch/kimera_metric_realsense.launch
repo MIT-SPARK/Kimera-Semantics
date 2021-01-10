@@ -1,93 +1,35 @@
 <?xml version="1.0" encoding="ISO-8859-15"?>
 <launch>
-  <!-- Turn on depth registration if not already registered. Necessary for online runs.-->
-  <arg name="register_depth" default="false"/>
-  <arg name="register_color" default="false"/>
-
   <!-- If you aren't running a bag file, set to false-->
-  <arg name="should_use_sim_time" default="false"/>
-  
+  <arg name="should_use_sim_time" default="true"/>
+  <arg name="max_ray_length_m"    default="2.5"/>
 
   <!-- If you just want to run 3D reconstruction without semantics, set this flag to false-->
-  <arg name="metric_semantic_reconstruction" value="false"/>
+  <arg name="metric_semantic_reconstruction"      value="true"/>
+  <arg name="semantic_label_2_color_csv_filepath" default="$(find kimera_semantics_ros)/cfg/maskrcnn_mapping.csv"/>
 
   <!-- Change sensor frame to:
    - 1. VIO's estimated base_link: `left_cam_base_link`
    - 2. Or, if you want to use simulator's ground-truth: `left_cam`
   -->
-  <arg name="sensor_frame" value="left_cam"/>
+  <arg name="sensor_frame" value="depth_cam"/>
 
-  <!-- Subscribed Topics -->
-  <!-- <arg name="left_cam_info_topic"       default="/camera/infra1/camera_info"/>
-  <arg name="left_cam_topic"            default="/camera/infra1/image_rect_raw"/> -->
-  <arg name="left_cam_info_topic"       default="/camera/color/camera_info"/>
-  <arg name="left_cam_topic"            default="/camera/color/image_raw"/>
-  <arg name="left_cam_depth_topic" 	default="/kimera/depth_registered/image_rect_raw"/>
+  <!-- Input -->
+  <arg name="left_cam_info_topic"         default="/depth_camera/aligned_depth_to_color/camera_info"/>
+  <arg name="left_cam_topic"              default="/depth_camera/color/image_raw"/>
+  <arg name="left_cam_segmentation_topic" default="/depth_camera/color/semantic_image"/>
+  <arg name="left_cam_depth_topic"        default="/depth_camera/aligned_depth_to_color/image_raw"/>
 
-  <group if="$(arg register_color)">
-   <!-- Additional topics necessary for transforming to RGB frame -->
-   <arg name="color_cam_info_topic"      default="/camera/color/camera_info"/>
-   <arg name="color_cam_topic"         	default="/camera/color/image_raw"/>
-   <arg name="registered_color_topic" default="/kimera/color_registered/image_rect_raw"/>
-   <arg name="registered_color_info_topic" default="/kimera/color_registered/camera_info"/>
+  <!-- Tracking IMU to Tracking Camera tf -->
+  <node pkg="tf" type="static_transform_publisher" name="imu_to_left_cam"
+    args="-0.0107491 0.00339225 0.02843741 0.0052734748 0.0001508149  0.0022978430 0.9999834436 base_link_dvio left_cam 100"/>
+  <!-- Tracking to Mapping Camera tf -->
+  <node pkg="tf" type="static_transform_publisher" name="inter_cam_tf"
+    args="0.075 0 -0.065 0 0.7071 0 0.7071  left_cam depth_cam 100"/>
+  <node pkg="tf" type="static_transform_publisher" name="inter_cam_tf_2"
+    args="0.075 0 -0.065 0 0.7071 0 0.7071 left_cam depth_camera_color_optical_frame 100"/>
 
-   <!-- Get the scene depth image transformed to the rgb camera frame -->
-   <node pkg="nodelet" type="nodelet" name="transform_scenergb2infra"
-   args="load depth_image_proc/register nodelet_manager --no-bond">
-
-    <!-- Input: RGB camera calibration and metadata. (sensor_msgs/CameraInfo) -->
-    <remap from="rgb/camera_info" to="$(arg left_cam_info_topic)"/> 
-    <!-- Input: Depth camera calibration and metadata. (sensor_msgs/CameraInfo) -->
-    <remap from="depth/camera_info" to="$(arg color_cam_info_topic)"/> 
-    <!-- Input: Rectified depth image. (sensor_msgs/Image) -->
-    <remap from="depth/image_rect" to="$(arg color_cam_topic)"/>
-
-    <!-- Output: Camera calibration and metadata. Same as rgb/camera_info but time-synced 
-    to depth_registered/image_rect. (sensor_msgs/CameraInfo)   -->
-    <remap from="depth_registered/camera_info" to="$(arg registered_color_info_topic)"/>
-    <!-- Output: Reprojected depth image in the RGB camera frame. -->
-    <remap from="depth_registered/image_rect" to="$(arg registered_color_topic)"/> 
-   </node>
-  </group>
-
-  <group if="$(arg register_depth)">
-   <!-- Additional topics necessary for transforming to RGB frame -->
-   <arg name="depth_cam_info_topic"      default="/camera/depth/camera_info"/>
-   <arg name="depth_cam_topic"         	default="/camera/depth/image_rect_raw"/>
-   <arg name="left_cam_depth_topic_info" default="/kimera/depth_registered/camera_info"/>
-
-   <!-- Get the scene depth image transformed to the rgb camera frame -->
-   <node pkg="nodelet" type="nodelet" name="transform_scenedepth2rgb"
-   args="load depth_image_proc/register nodelet_manager --no-bond">
-
-    <!-- Input: RGB camera calibration and metadata. (sensor_msgs/CameraInfo) -->
-    <remap from="rgb/camera_info" to="$(arg left_cam_info_topic)"/> 
-    <!-- Input: Depth camera calibration and metadata. (sensor_msgs/CameraInfo) -->
-    <remap from="depth/camera_info" to="$(arg depth_cam_info_topic)"/> 
-    <!-- Input: Rectified depth image. (sensor_msgs/Image) -->
-    <remap from="depth/image_rect" to="$(arg depth_cam_topic)"/>
-
-    <!-- Output: Camera calibration and metadata. Same as rgb/camera_info but time-synced 
-    to depth_registered/image_rect. (sensor_msgs/CameraInfo)   -->
-    <remap from="depth_registered/camera_info" to="$(arg left_cam_depth_topic_info)"/>
-    <!-- Output: Reprojected depth image in the RGB camera frame. -->
-    <remap from="depth_registered/image_rect" to="$(arg left_cam_depth_topic)"/> 
-   </node>
-  </group>
 
   <!-- Launch actual pipeline -->
-  <include file="$(find kimera_semantics_ros)/launch/kimera_semantics.launch">
-   <!-- Settings -->
-   <arg name="metric_semantic_reconstruction" value="$(arg metric_semantic_reconstruction)"/>
-   <arg name="should_use_sim_time" value="$(arg should_use_sim_time)"/>
-   <arg name="sensor_frame" value="$(arg sensor_frame)"/>
-
-   <!-- Subscribed Topics -->
-   <arg name="left_cam_info_topic"       value="$(arg left_cam_info_topic)"/>
-   <arg name="left_cam_topic"            value="$(arg left_cam_topic)"/>
-   <arg name="left_cam_depth_topic" 	value="$(arg left_cam_depth_topic)"/>   
-
-   <!-- VoxBlox parameters -->
-   <arg name="voxel_size"            value="0.02"/>
-  </include>
+  <include file="$(find kimera_semantics_ros)/launch/kimera_semantics.launch" pass_all_args="true"/>
 </launch>

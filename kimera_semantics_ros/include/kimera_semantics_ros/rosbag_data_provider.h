@@ -30,6 +30,7 @@ struct RosbagData {
   RosbagData(const ros::Duration& rosbag_duration)
       : depth_imgs_(),
         semantic_imgs_(),
+        rgb_imgs_(),
         cam_info_(),
         camera_to_base_link_tf_static_(),
         tf_listener_(ros::Duration(rosbag_duration)) {}
@@ -37,6 +38,7 @@ struct RosbagData {
  public:
   std::vector<sensor_msgs::ImageConstPtr> depth_imgs_;
   std::vector<sensor_msgs::ImageConstPtr> semantic_imgs_;
+  std::vector<sensor_msgs::ImageConstPtr> rgb_imgs_;
   sensor_msgs::CameraInfoConstPtr cam_info_;
   tf::StampedTransform camera_to_base_link_tf_static_;
   tf::TransformListener tf_listener_;
@@ -76,12 +78,14 @@ class RosbagDataProvider {
   std::string rosbag_path_;
   std::string depth_imgs_topic_;
   std::string semantic_imgs_topic_;
+  std::string rgb_imgs_topic_;
   std::string left_cam_info_topic_;
 
   // Publishers
   ros::Publisher clock_pub_;
   ros::Publisher depth_img_pub_;
   ros::Publisher semantic_img_pub_;
+  ros::Publisher rgb_img_pub_;
 
   // Frame IDs
   std::string sensor_frame_id_;

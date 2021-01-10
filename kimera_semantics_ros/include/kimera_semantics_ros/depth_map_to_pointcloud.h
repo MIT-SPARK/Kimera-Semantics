@@ -308,9 +308,6 @@ bool lookupTransformTf(const tf::TransformListener& tf_listener,
 
   try {
     tf_listener.lookupTransform(to_frame, from_frame, timestamp, tf_transform);
-  } catch (tf::TransformException& ex) {
-    LOG(ERROR) << "Error getting TF transform from sensor data: " << ex.what();
-    return false;
   } catch (tf::LookupException& ex) {
     LOG(ERROR) << "Error getting TF transform from sensor data: " << ex.what();
     return false;
@@ -321,6 +318,9 @@ bool lookupTransformTf(const tf::TransformListener& tf_listener,
     LOG(ERROR) << "Error getting TF transform from sensor data: " << ex.what();
     return false;
   } catch (tf2::InvalidArgumentException& ex) {
+    LOG(ERROR) << "Error getting TF transform from sensor data: " << ex.what();
+    return false;
+  } catch (tf::TransformException& ex) {
     LOG(ERROR) << "Error getting TF transform from sensor data: " << ex.what();
     return false;
   }

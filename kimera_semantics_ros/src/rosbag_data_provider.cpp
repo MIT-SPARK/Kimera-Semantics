@@ -9,6 +9,8 @@
 
 #include <glog/logging.h>
 
+#include <ros/duration.h>
+
 #include <tf/transform_listener.h>
 #include <tf/transform_datatypes.h>
 #include <tf_conversions/tf_eigen.h>
@@ -24,10 +26,12 @@ RosbagDataProvider::RosbagDataProvider()
       rosbag_path_(""),
       depth_imgs_topic_(""),
       semantic_imgs_topic_(""),
+      rgb_imgs_topic_(""),
       left_cam_info_topic_(""),
       clock_pub_(),
       depth_img_pub_(),
       semantic_img_pub_(),
+      rgb_img_pub_(),
       timestamp_last_frame_(std::numeric_limits<Timestamp>::min()),
       timestamp_last_kf_(std::numeric_limits<Timestamp>::min()),
       timestamp_last_gt_(std::numeric_limits<Timestamp>::min()),
@@ -37,6 +41,7 @@ RosbagDataProvider::RosbagDataProvider()
   CHECK(nh_private_.getParam("rosbag_path", rosbag_path_));
   CHECK(nh_private_.getParam("depth_cam_topic", depth_imgs_topic_));
   CHECK(nh_private_.getParam("semantic_cam_topic", semantic_imgs_topic_));
+  CHECK(nh_private_.getParam("rgb_cam_topic", rgb_imgs_topic_));
   CHECK(nh_private_.getParam("left_cam_info_topic", left_cam_info_topic_));
 
   CHECK(nh_private_.getParam("sensor_frame", sensor_frame_id_));
@@ -48,11 +53,13 @@ RosbagDataProvider::RosbagDataProvider()
             << "With ROS topics: \n"
             << " - Depth cam: " << depth_imgs_topic_.c_str() << '\n'
             << " - Semantic cam: " << semantic_imgs_topic_.c_str() << '\n'
+            << " - RGB cam: " << rgb_imgs_topic_.c_str() << '\n'
             << " - Cam info: " << left_cam_info_topic_.c_str();
 
   CHECK(!rosbag_path_.empty());
   CHECK(!depth_imgs_topic_.empty());
   CHECK(!semantic_imgs_topic_.empty());
+  CHECK(!rgb_imgs_topic_.empty());
 
   // Ros publishers specific to rosbag data provider
   static constexpr size_t kQueueSize = 10u;
@@ -62,6 +69,8 @@ RosbagDataProvider::RosbagDataProvider()
       nh_.advertise<sensor_msgs::Image>(depth_imgs_topic_, kQueueSize);
   semantic_img_pub_ =
       nh_.advertise<sensor_msgs::Image>(semantic_imgs_topic_, kQueueSize);
+  rgb_img_pub_ =
+      nh_.advertise<sensor_msgs::Image>(rgb_imgs_topic_, kQueueSize);
 }
 
 void RosbagDataProvider::initialize() {
@@ -83,6 +92,7 @@ bool RosbagDataProvider::parseRosbag(const std::string& bag_path) {
   std::vector<std::string> topics;
   topics.push_back(depth_imgs_topic_);
   topics.push_back(semantic_imgs_topic_);
+  topics.push_back(rgb_imgs_topic_);
   topics.push_back(left_cam_info_topic_);
   topics.push_back("/tf");
   topics.push_back("/tf_static");
@@ -110,12 +120,16 @@ bool RosbagDataProvider::parseRosbag(const std::string& bag_path) {
         rosbag_data_->depth_imgs_.push_back(img_msg);
       } else if (msg_topic == semantic_imgs_topic_) {
         rosbag_data_->semantic_imgs_.push_back(img_msg);
+      } else if (msg_topic == rgb_imgs_topic_) {
+        rosbag_data_->rgb_imgs_.push_back(img_msg);
       } else {
         LOG(WARNING) << "Img with unexpected topic: " << msg_topic;
       }
       if (kEarlyStopForDebug &&
           rosbag_data_->depth_imgs_.size() ==
               rosbag_data_->semantic_imgs_.size() &&
+          rosbag_data_->depth_imgs_.size() ==
+              rosbag_data_->rgb_imgs_.size() &&
           rosbag_data_->depth_imgs_.size() >= 300u) {
         LOG(ERROR) << "Early break.";
         break;
@@ -166,9 +180,14 @@ bool RosbagDataProvider::parseRosbag(const std::string& bag_path) {
       << "No depth images parsed from rosbag.";
   LOG_IF(FATAL, rosbag_data_->semantic_imgs_.size() == 0)
       << "No semantic images  parsed from rosbag.";
+  LOG_IF(FATAL, rosbag_data_->rgb_imgs_.size() == 0)
+      << "No rgb images  parsed from rosbag.";
   LOG_IF(FATAL,
          rosbag_data_->depth_imgs_.size() != rosbag_data_->semantic_imgs_.size())
       << "Unequal number of depth and semantic images.";
+  LOG_IF(FATAL,
+         rosbag_data_->depth_imgs_.size() != rosbag_data_->rgb_imgs_.size())
+      << "Unequal number of depth and rgb images.";
   LOG(INFO) << "Finished parsing rosbag data.";
   return true;
 }
@@ -187,12 +206,15 @@ void RosbagDataProvider::publishClock(const Timestamp& timestamp) const {
 void RosbagDataProvider::publishInputs(const Timestamp& timestamp_kf) {
   // Publish left and right images:
   if (k_last_kf_ < rosbag_data_->depth_imgs_.size() &&
-      k_last_kf_ < rosbag_data_->semantic_imgs_.size()) {
+      k_last_kf_ < rosbag_data_->semantic_imgs_.size() &&
+      k_last_kf_ < rosbag_data_->rgb_imgs_.size()) {
     while (timestamp_last_kf_ < timestamp_kf &&
            k_last_kf_ < rosbag_data_->depth_imgs_.size() &&
-           k_last_kf_ < rosbag_data_->semantic_imgs_.size()) {
+           k_last_kf_ < rosbag_data_->semantic_imgs_.size() &&
+           k_last_kf_ < rosbag_data_->rgb_imgs_.size()) {
       depth_img_pub_.publish(rosbag_data_->depth_imgs_.at(k_last_kf_));
       semantic_img_pub_.publish(rosbag_data_->semantic_imgs_.at(k_last_kf_));
+      rgb_img_pub_.publish(rosbag_data_->rgb_imgs_.at(k_last_kf_));
       timestamp_last_kf_ =
           rosbag_data_->depth_imgs_.at(k_last_kf_)->header.stamp;
       k_last_kf_++;

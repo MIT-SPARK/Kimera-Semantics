@@ -26,14 +26,5 @@
     local-name: catkin_boost_python_buildtool
     uri: git@github.com:ethz-asl/catkin_boost_python_buildtool.git
 - git:
-    local-name: schweizer_messer
-    uri: git@github.com:ethz-asl/schweizer_messer.git
-- git:
-    local-name: pointcloud_recolor
-    uri: git@github.com:ToniRV/ROS_pointcloud_recolor.git
-- git:
     local-name: voxblox
     uri: git@github.com:ethz-asl/voxblox.git
-- git:
-    local-name: Kimera-Semantics
-    uri: git@github.com:MIT-SPARK/Kimera-Semantics.git

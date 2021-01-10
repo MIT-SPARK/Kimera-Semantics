@@ -1,5 +1,8 @@
 #include <ros/ros.h>
 
+#include <glog/logging.h>
+#include <gflags/gflags.h>
+
 #include "kimera_semantics/common.h"
 #include "kimera_semantics_ros/semantic_simulation_server.h"
 
@@ -35,9 +38,11 @@ class SemanticSimulationServerImpl : public SemanticSimulationServer {
 
 int main(int argc, char** argv) {
   ros::init(argc, argv, "kimera_semantics_simulator");
+
   google::InitGoogleLogging(argv[0]);
   google::ParseCommandLineFlags(&argc, &argv, false);
   google::InstallFailureSignalHandler();
+
   ros::NodeHandle nh;
   ros::NodeHandle nh_private("~");
 
