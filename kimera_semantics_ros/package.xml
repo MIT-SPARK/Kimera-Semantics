@@ -20,7 +20,6 @@
   <depend>pcl_ros</depend>
   <depend>sensor_msgs</depend>
   <depend>tf</depend>
-  <depend>disparity_image_proc</depend>
   <depend>depth_image_proc</depend>
   <depend>image_geometry</depend>
 
@@ -29,4 +28,6 @@
   <depend>voxblox_ros</depend>
   <depend>voxblox_msgs</depend>
   <depend>voxblox_rviz_plugin</depend>
+
+  <exec_depend>disparity_image_proc</exec_depend>
 </package>
