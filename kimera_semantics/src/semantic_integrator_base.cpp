@@ -105,19 +105,22 @@ void SemanticIntegratorBase::setSemanticProbabilities() {
       << "Your probabilities do not make sense... The likelihood of a "
          "label, knowing that we have measured that label, should not be"
          "smaller than the likelihood of seeing another label!";
+  semantic_log_likelihood_.resize(semantic_config_.total_number_of_layers, semantic_config_.total_number_of_layers);
   semantic_log_likelihood_ =
-      semantic_log_likelihood_.Constant(log_non_match_probability_);
+      semantic_log_likelihood_.setConstant(log_non_match_probability_);
   semantic_log_likelihood_.diagonal() =
-      semantic_log_likelihood_.diagonal().Constant(log_match_probability_);
+      semantic_log_likelihood_.diagonal().setConstant(log_match_probability_);
   // TODO(Toni): sanity checks, set as DCHECK_EQ.
   CHECK_NEAR(semantic_log_likelihood_.diagonal().sum(),
-             kTotalNumberOfLabels * log_match_probability_,
+             semantic_config_.total_number_of_layers * log_match_probability_,
              100 * vxb::kFloatEpsilon);
+
+
   CHECK_NEAR(
       semantic_log_likelihood_.sum(),
-      kTotalNumberOfLabels * log_match_probability_ +
-          std::pow(kTotalNumberOfLabels, 2) * log_non_match_probability_ -
-          kTotalNumberOfLabels * log_non_match_probability_,
+      semantic_config_.total_number_of_layers * log_match_probability_ +
+          std::pow(semantic_config_.total_number_of_layers, 2) * log_non_match_probability_ -
+              semantic_config_.total_number_of_layers * log_non_match_probability_,
       1000 * vxb::kFloatEpsilon);
 }
 
@@ -198,13 +201,19 @@ void SemanticIntegratorBase::updateSemanticVoxel(
 // updateLayerWithStoredBlocks()
 SemanticVoxel* SemanticIntegratorBase::allocateStorageAndGetSemanticVoxelPtr(
     const vxb::GlobalIndex& global_voxel_idx,
+    size_t total_number_of_labels,
     vxb::Block<SemanticVoxel>::Ptr* last_block,
     vxb::BlockIndex* last_block_idx) {
   DCHECK(last_block != nullptr);
   DCHECK(last_block_idx != nullptr);
 
+  SemanticVoxel semanticVoxel;
+
   const vxb::BlockIndex& block_idx = vxb::getBlockIndexFromGlobalVoxelIndex(
       global_voxel_idx, semantic_voxels_per_side_inv_);
+
+  const vxb::VoxelIndex local_voxel_idx = vxb::getLocalFromGlobalVoxelIndex(
+          global_voxel_idx, semantic_voxels_per_side_);
 
   if ((block_idx != *last_block_idx) || (*last_block == nullptr)) {
     *last_block = semantic_layer_->getBlockPtrByIndex(block_idx);
@@ -222,6 +231,7 @@ SemanticVoxel* SemanticIntegratorBase::allocateStorageAndGetSemanticVoxelPtr(
         temp_semantic_block_map_.find(block_idx);
     if (it != temp_semantic_block_map_.end()) {
       *last_block = it->second;
+      semanticVoxel = (*last_block)->getVoxelByVoxelIndex(local_voxel_idx);
     } else {
       auto insert_status = temp_semantic_block_map_.emplace(
           block_idx,
@@ -235,16 +245,19 @@ SemanticVoxel* SemanticIntegratorBase::allocateStorageAndGetSemanticVoxelPtr(
                                    << block_idx.transpose();
 
       *last_block = insert_status.first->second;
+      semanticVoxel = (*last_block)->getVoxelByVoxelIndex(local_voxel_idx);
+      semanticVoxel.total_number_of_layers = total_number_of_labels;
+
+      SemanticProbabilities sem_probs;
+      sem_probs.resize(total_number_of_labels,1);
+      sem_probs.setConstant(std::log(1.0/float(total_number_of_labels)));
     }
   }
 
   // Only used if someone calls the getAllUpdatedBlocks I believe.
   (*last_block)->updated() = true;
 
-  const vxb::VoxelIndex local_voxel_idx = vxb::getLocalFromGlobalVoxelIndex(
-      global_voxel_idx, semantic_voxels_per_side_);
-
-  return &((*last_block)->getVoxelByVoxelIndex(local_voxel_idx));
+  return &(semanticVoxel);
 }
 
 // NOT THREAD SAFE
@@ -278,11 +291,11 @@ void SemanticIntegratorBase::updateSemanticVoxelProbabilities(
     const SemanticProbabilities& measurement_frequencies,
     SemanticProbabilities* semantic_prior_probability) const {
   DCHECK(semantic_prior_probability != nullptr);
-  DCHECK_EQ(semantic_prior_probability->size(), kTotalNumberOfLabels);
+  DCHECK_EQ(semantic_prior_probability->size(), semantic_config_.total_number_of_layers);
   DCHECK_LE((*semantic_prior_probability)[0], 0.0);
   DCHECK(std::isfinite((*semantic_prior_probability)[0]));
   DCHECK(!semantic_prior_probability->hasNaN());
-  DCHECK_EQ(measurement_frequencies.size(), kTotalNumberOfLabels);
+  DCHECK_EQ(measurement_frequencies.size(), semantic_config_.total_number_of_layers);
   DCHECK_GE(measurement_frequencies.sum(), 1.0)
       << "We should at least have one measurement when calling this "
          "function.";

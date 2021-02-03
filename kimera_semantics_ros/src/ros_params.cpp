@@ -48,6 +48,12 @@ getSemanticTsdfIntegratorConfigFromRosParam(const ros::NodeHandle& nh_private) {
   semantic_config.semantic_measurement_probability_ =
       static_cast<SemanticProbability>(semantic_measurement_probability);
 
+  // Get the total number of labels of the prediction
+  int total_number_of_layers = semantic_config.total_number_of_layers;
+  nh_private.param("total_number_of_layers",
+                   total_number_of_layers,
+                   total_number_of_layers);
+
   // Get semantic color mode
   std::string color_mode = "color";
   nh_private.param("semantic_color_mode", color_mode, color_mode);

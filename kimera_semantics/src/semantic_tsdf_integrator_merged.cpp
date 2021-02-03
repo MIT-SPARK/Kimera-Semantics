@@ -319,7 +319,7 @@ void MergedSemanticTsdfIntegrator::integrateVoxel(
                     merged_weight, voxel);
 
     SemanticVoxel* semantic_voxel =
-        allocateStorageAndGetSemanticVoxelPtr(global_voxel_idx, &semantic_block, &semantic_block_idx);
+        allocateStorageAndGetSemanticVoxelPtr(global_voxel_idx, semantic_config_.total_number_of_layers, &semantic_block, &semantic_block_idx);
     updateSemanticVoxel(global_voxel_idx,
                         semantic_label_frequencies,
                         &mutexes_,

@@ -76,6 +76,10 @@ class SemanticIntegratorBase {
     // probability of non-match = 1 - measurement_probability_.
     SemanticProbability semantic_measurement_probability_ = 0.9f;
 
+    //The total number of labels in the segmenation node
+    //Used by the confidence matrices
+    size_t total_number_of_layers = 21;
+
     /// How to color the semantic mesh.
     ColorMode color_mode = ColorMode::kSemantic;
 
@@ -127,6 +131,7 @@ class SemanticIntegratorBase {
   // later by calling updateLayerWithStoredBlocks()
   SemanticVoxel* allocateStorageAndGetSemanticVoxelPtr(
       const vxb::GlobalIndex& global_voxel_idx,
+      size_t total_number_of_labels,
       vxb::Block<SemanticVoxel>::Ptr* last_semantic_block,
       vxb::BlockIndex* last_block_idx);
 
