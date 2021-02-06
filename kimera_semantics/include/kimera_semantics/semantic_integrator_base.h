@@ -78,7 +78,7 @@ class SemanticIntegratorBase {
 
     //The total number of labels in the segmenation node
     //Used by the confidence matrices
-    size_t total_number_of_layers = 21;
+    size_t total_number_of_labels = 21;
 
     /// How to color the semantic mesh.
     ColorMode color_mode = ColorMode::kSemantic;

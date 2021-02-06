@@ -53,6 +53,8 @@ class SemanticLabel2Color {
   // Make these public if someone wants to access them directly.
   ColorToSemanticLabelMap color_to_semantic_label_;
   SemanticLabelToColorMap semantic_label_to_color_map_;
+
+  size_t number_of_colored_labels;
 };
 
 // Color map from semantic labels to colors.
@@ -66,8 +68,10 @@ inline SemanticLabelToColorMap getRandomSemanticLabelToColorMap() {
   }
   // Make first colours easily distinguishable.
   CHECK_GE(semantic_label_color_map_.size(), 8);
-  CHECK_GE(semantic_label_color_map_.size(), kTotalNumberOfLabels);
+  //We won't use this check, color_map size is numberic limit max anyways
+  //CHECK_GE(semantic_label_color_map_.size(), max_possible_label);
   // TODO(Toni): Check it Matches with default value for SemanticVoxel!
+  //The semantic Labels written here are only meaningful for the Tesse simulation
   semantic_label_color_map_.at(0) = HashableColor::Gray();    // Label unknown
   semantic_label_color_map_.at(1) = HashableColor::Green();   // Label Ceiling
   semantic_label_color_map_.at(2) = HashableColor::Blue();    // Label Chair
