@@ -54,7 +54,7 @@ class SemanticLabel2Color {
   ColorToSemanticLabelMap color_to_semantic_label_;
   SemanticLabelToColorMap semantic_label_to_color_map_;
 
-  size_t number_of_colored_labels;
+  size_t number_of_colored_labels_;
 };
 
 // Color map from semantic labels to colors.

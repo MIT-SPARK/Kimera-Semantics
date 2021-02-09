@@ -129,10 +129,10 @@ void FastSemanticTsdfIntegrator::integrateSemanticFunction(
       updateTsdfVoxel(origin, point_G, global_voxel_idx, color, weight, voxel);
 
       SemanticVoxel* semantic_voxel = allocateStorageAndGetSemanticVoxelPtr(
-              global_voxel_idx, semantic_config_.total_number_of_labels, &semantic_block, &semantic_block_idx);
+              global_voxel_idx, semantic_config_.total_number_of_labels_, &semantic_block, &semantic_block_idx);
 
       SemanticProbabilities semantic_label_frequencies;
-      semantic_label_frequencies.resize(semantic_config_.total_number_of_labels, 1);
+      semantic_label_frequencies.resize(semantic_config_.total_number_of_labels_, 1);
       semantic_label_frequencies.setZero();
 
       CHECK_LT(semantic_label, semantic_label_frequencies.size());

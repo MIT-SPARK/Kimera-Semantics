@@ -16,11 +16,11 @@ namespace kimera {
         // Initialize voxel to unknown label.
         SemanticLabel semantic_label = 0u;
         // Initialize voxel to uniform probability.
-        // Use log odds! So uniform ditribution of 1/total_number_of_labels,
-        // should be std::log(1/total_number_of_labels)
-        size_t total_number_of_layers;
+        // Use log odds! So uniform ditribution of 1/total_number_of_labels_,
+        // should be std::log(1/total_number_of_labels_)
+        size_t total_number_of_layers_;
 
-        // SemanticProbabilities::Constant(std::log(1 / total_number_of_labels));
+        // SemanticProbabilities::Constant(std::log(1 / total_number_of_labels_));
         SemanticProbabilities semantic_priors;
 
         // Initialize voxel with gray color
