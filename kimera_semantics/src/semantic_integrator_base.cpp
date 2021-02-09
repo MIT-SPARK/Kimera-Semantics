@@ -215,9 +215,6 @@ SemanticVoxel* SemanticIntegratorBase::allocateStorageAndGetSemanticVoxelPtr(
   const vxb::BlockIndex& block_idx = vxb::getBlockIndexFromGlobalVoxelIndex(
       global_voxel_idx, semantic_voxels_per_side_inv_);
 
-  const vxb::VoxelIndex local_voxel_idx = vxb::getLocalFromGlobalVoxelIndex(
-          global_voxel_idx, semantic_voxels_per_side_);
-
   if ((block_idx != *last_block_idx) || (*last_block == nullptr)) {
     *last_block = semantic_layer_->getBlockPtrByIndex(block_idx);
     *last_block_idx = block_idx;
@@ -250,7 +247,7 @@ SemanticVoxel* SemanticIntegratorBase::allocateStorageAndGetSemanticVoxelPtr(
 
       SemanticProbabilities sem_probs;
       sem_probs.resize(total_number_of_labels,1);
-      sem_probs.setConstant(std::log(1.0/float(total_number_of_labels)));
+      sem_probs.setConstant(std::log(1.0 /float(total_number_of_labels)));
 
       for (size_t voxel_index = 0; voxel_index<std::pow(semantic_voxels_per_side_,3); voxel_index++){
           (*last_block)->getVoxelByLinearIndex(voxel_index).total_number_of_layers_ = total_number_of_labels;
@@ -262,6 +259,9 @@ SemanticVoxel* SemanticIntegratorBase::allocateStorageAndGetSemanticVoxelPtr(
 
   // Only used if someone calls the getAllUpdatedBlocks I believe.
   (*last_block)->updated() = true;
+
+  const vxb::VoxelIndex local_voxel_idx = vxb::getLocalFromGlobalVoxelIndex(
+          global_voxel_idx, semantic_voxels_per_side_);
 
   return &((*last_block)->getVoxelByVoxelIndex(local_voxel_idx));
 }
@@ -346,7 +346,7 @@ void SemanticIntegratorBase::normalizeProbabilities(
   } else {
     CHECK_EQ(unnormalized_probs->size(), semantic_config_.total_number_of_labels_);
     static const SemanticProbability kUniformLogProbability =
-        std::log(1 / semantic_config_.total_number_of_labels_);
+        std::log(1.0 / semantic_config_.total_number_of_labels_);
     LOG(WARNING) << "Normalization Factor is " << normalization_factor
                  << ", all values are 0. Normalizing to log(1/n) = "
                  << kUniformLogProbability;
