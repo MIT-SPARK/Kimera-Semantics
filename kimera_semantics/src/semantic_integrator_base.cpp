@@ -47,6 +47,7 @@
 
 #include <voxblox/integrator/tsdf_integrator.h>
 #include <voxblox/utils/timing.h>
+#include <iostream>
 
 #include "kimera_semantics/color.h"
 #include "kimera_semantics/common.h"
@@ -105,20 +106,23 @@ void SemanticIntegratorBase::setSemanticProbabilities() {
       << "Your probabilities do not make sense... The likelihood of a "
          "label, knowing that we have measured that label, should not be"
          "smaller than the likelihood of seeing another label!";
-  semantic_log_likelihood_ =
-      semantic_log_likelihood_.Constant(log_non_match_probability_);
+  semantic_log_likelihood_.resize(semantic_config_.total_number_of_labels_, semantic_config_.total_number_of_labels_);
+  semantic_log_likelihood_.setConstant(log_non_match_probability_);
   semantic_log_likelihood_.diagonal() =
-      semantic_log_likelihood_.diagonal().Constant(log_match_probability_);
+      semantic_log_likelihood_.diagonal().setConstant(log_match_probability_);
+
   // TODO(Toni): sanity checks, set as DCHECK_EQ.
   CHECK_NEAR(semantic_log_likelihood_.diagonal().sum(),
-             kTotalNumberOfLabels * log_match_probability_,
-             100 * vxb::kFloatEpsilon);
+             semantic_config_.total_number_of_labels_ * log_match_probability_,
+             10e-2);
+
+
   CHECK_NEAR(
       semantic_log_likelihood_.sum(),
-      kTotalNumberOfLabels * log_match_probability_ +
-          std::pow(kTotalNumberOfLabels, 2) * log_non_match_probability_ -
-          kTotalNumberOfLabels * log_non_match_probability_,
-      1000 * vxb::kFloatEpsilon);
+      semantic_config_.total_number_of_labels_ * log_match_probability_ +
+      std::pow(semantic_config_.total_number_of_labels_, 2) * log_non_match_probability_ -
+      semantic_config_.total_number_of_labels_ * log_non_match_probability_,
+      10e-2);
 }
 
 // TODO(Toni): Complete this function!!
@@ -155,13 +159,16 @@ void SemanticIntegratorBase::updateSemanticVoxel(
   updateSemanticVoxelProbabilities(measurement_frequencies,
                                    &semantic_voxel->semantic_priors);
 
+
   // Get MLE semantic label.
   calculateMaximumLikelihoodLabel(semantic_voxel->semantic_priors,
                                   &semantic_voxel->semantic_label);
 
+
   // Colorize according to current MLE semantic label.
   updateSemanticVoxelColor(semantic_voxel->semantic_label,
                            &semantic_voxel->color);
+
 
   // Actually change the color of the TSDF voxel so we do not need to change a
   // single line for the meshing with respect to Voxblox.
@@ -185,7 +192,8 @@ void SemanticIntegratorBase::updateSemanticVoxel(
   }
   ////////////////////////////////////////////////////////////////////////////
   //}
-}
+
+  }
 
 // Will return a pointer to a voxel located at global_voxel_idx in the tsdf
 // layer. Thread safe.
@@ -198,6 +206,7 @@ void SemanticIntegratorBase::updateSemanticVoxel(
 // updateLayerWithStoredBlocks()
 SemanticVoxel* SemanticIntegratorBase::allocateStorageAndGetSemanticVoxelPtr(
     const vxb::GlobalIndex& global_voxel_idx,
+    size_t total_number_of_labels,
     vxb::Block<SemanticVoxel>::Ptr* last_block,
     vxb::BlockIndex* last_block_idx) {
   DCHECK(last_block != nullptr);
@@ -205,6 +214,9 @@ SemanticVoxel* SemanticIntegratorBase::allocateStorageAndGetSemanticVoxelPtr(
 
   const vxb::BlockIndex& block_idx = vxb::getBlockIndexFromGlobalVoxelIndex(
       global_voxel_idx, semantic_voxels_per_side_inv_);
+
+  const vxb::VoxelIndex local_voxel_idx = vxb::getLocalFromGlobalVoxelIndex(
+          global_voxel_idx, semantic_voxels_per_side_);
 
   if ((block_idx != *last_block_idx) || (*last_block == nullptr)) {
     *last_block = semantic_layer_->getBlockPtrByIndex(block_idx);
@@ -235,14 +247,21 @@ SemanticVoxel* SemanticIntegratorBase::allocateStorageAndGetSemanticVoxelPtr(
                                    << block_idx.transpose();
 
       *last_block = insert_status.first->second;
+
+      SemanticProbabilities sem_probs;
+      sem_probs.resize(total_number_of_labels,1);
+      sem_probs.setConstant(std::log(1.0/float(total_number_of_labels)));
+
+      for (size_t voxel_index = 0; voxel_index<std::pow(semantic_voxels_per_side_,3); voxel_index++){
+          (*last_block)->getVoxelByLinearIndex(voxel_index).total_number_of_layers_ = total_number_of_labels;
+          (*last_block)->getVoxelByLinearIndex(voxel_index).semantic_priors = sem_probs;
+      }
+
     }
   }
 
   // Only used if someone calls the getAllUpdatedBlocks I believe.
   (*last_block)->updated() = true;
-
-  const vxb::VoxelIndex local_voxel_idx = vxb::getLocalFromGlobalVoxelIndex(
-      global_voxel_idx, semantic_voxels_per_side_);
 
   return &((*last_block)->getVoxelByVoxelIndex(local_voxel_idx));
 }
@@ -278,11 +297,11 @@ void SemanticIntegratorBase::updateSemanticVoxelProbabilities(
     const SemanticProbabilities& measurement_frequencies,
     SemanticProbabilities* semantic_prior_probability) const {
   DCHECK(semantic_prior_probability != nullptr);
-  DCHECK_EQ(semantic_prior_probability->size(), kTotalNumberOfLabels);
+  DCHECK_EQ(semantic_prior_probability->size(), semantic_config_.total_number_of_labels_);
   DCHECK_LE((*semantic_prior_probability)[0], 0.0);
   DCHECK(std::isfinite((*semantic_prior_probability)[0]));
   DCHECK(!semantic_prior_probability->hasNaN());
-  DCHECK_EQ(measurement_frequencies.size(), kTotalNumberOfLabels);
+  DCHECK_EQ(measurement_frequencies.size(), semantic_config_.total_number_of_labels_);
   DCHECK_GE(measurement_frequencies.sum(), 1.0)
       << "We should at least have one measurement when calling this "
          "function.";
@@ -325,9 +344,9 @@ void SemanticIntegratorBase::normalizeProbabilities(
   if (normalization_factor != 0.0) {
     unnormalized_probs->normalize();
   } else {
-    CHECK_EQ(unnormalized_probs->size(), kTotalNumberOfLabels);
+    CHECK_EQ(unnormalized_probs->size(), semantic_config_.total_number_of_labels_);
     static const SemanticProbability kUniformLogProbability =
-        std::log(1 / kTotalNumberOfLabels);
+        std::log(1 / semantic_config_.total_number_of_labels_);
     LOG(WARNING) << "Normalization Factor is " << normalization_factor
                  << ", all values are 0. Normalizing to log(1/n) = "
                  << kUniformLogProbability;

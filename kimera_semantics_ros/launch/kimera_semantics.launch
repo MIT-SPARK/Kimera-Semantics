@@ -125,6 +125,7 @@
 
     <param name="semantic_label_2_color_csv_filepath"
     value="$(find kimera_semantics_ros)/cfg/tesse_multiscene_office1_segmentation_mapping.csv"/>
+    <param name="total_number_of_labels" value="21"/>
 
     <param name="publish_pointclouds"     value="false"/>
     <param name="update_mesh_every_n_sec" value="0.1" />

@@ -62,6 +62,7 @@ SemanticLabel2Color::SemanticLabel2Color(const std::string& filename)
   // TODO(Toni): remove
   // Assign color 255,255,255 to unknown object 0u
   color_to_semantic_label_[HashableColor::White()] = 0u;
+    number_of_colored_labels_ = row_number;
 }
 
 SemanticLabel SemanticLabel2Color::getSemanticLabelFromColor(
