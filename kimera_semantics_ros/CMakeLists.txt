@@ -12,6 +12,8 @@ cs_add_library(${PROJECT_NAME}
   include/kimera_semantics_ros/semantic_simulation_server.h
   include/kimera_semantics_ros/semantic_tsdf_server.h
   src/ros_params.cpp
+  src/semantic_simulation_server.cpp
+  src/semantic_tsdf_server.cpp
   src/rosbag_data_provider.cpp
   src/semantic_simulation_server.cpp
   src/semantic_tsdf_server.cpp
@@ -30,7 +32,7 @@ target_link_libraries(kimera_semantics_rosbag ${PROJECT_NAME})
 cs_add_executable(semantic_simulator_eval
   src/semantic_simulation_eval.cpp
 )
-target_link_libraries(semantic_simulator_eval ${PROJECT_NAME})
+target_link_libraries(semantic_simulator_eval ${PROJECT_NAME} ${PCL_LIBRARIES})
 
 cs_install()
 

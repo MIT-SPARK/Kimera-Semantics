@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="ISO-8859-15"?>
 <launch>
-  <arg name="voxel_size"     default="0.05"/>
+  <arg name="voxel_size"       default="0.05"/>
   <arg name="max_ray_length_m" default="5"/>
+
+  <arg name="metric_semantic_reconstruction" default="true"/>
 
   <!-- Change sensor frame to:
    - 1. VIO's estimated base_link: `left_cam_base_link`
@@ -11,12 +13,14 @@
   <!-- base_link_gt_frame is used to get the static tf between the base_link
   and the sensor_frame -->
   <arg name="base_link_gt_frame" default="base_link_gt"/>
-  <arg name="base_link_frame"    default="base_link_DVIO"/>
+  <arg name="base_link_frame"    default="base_link_gt"/>
 
-  <arg name="rosbag_path" default=""/>
-  <arg name="semantic_label_2_color_csv_filename" default=""/>
+  <arg name="rosbag_path" default="/home/tonirv/datasets/uHumans2/apartment_scene/uHumans2_apartment_s1_00h.bag"/>
+  <arg name="semantic_label_2_color_csv_filename" default="tesse_multiscene_archviz1_segmentation_mapping.csv"/>
+  <arg name="use_dynamic_masking" default="true"/>
 
   <!-- Input -->
+  <arg name="left_cam_rgb_topic"          default="/tesse/left_cam/rgb/image_raw"/>
   <arg name="left_cam_depth_topic"        default="/tesse/depth_cam/mono/image_raw"/>
   <arg name="left_cam_segmentation_topic" default="/tesse/seg_cam/rgb/image_raw"/>
   <arg name="left_cam_info_topic"         default="/tesse/depth_cam/camera_info"/>
@@ -26,11 +30,16 @@
 
   <node name="kimera_semantics_rosbag" pkg="kimera_semantics_ros"
     type="kimera_semantics_rosbag" output="screen" required="true"
-    args="-alsologtostderr -colorlogtostderr" clear_params="true">
+    args="--logtostderr=1
+          --colorlogtostderr=1
+          --log_prefix=1"
+    clear_params="true">
+    <param name="metric_semantic_reconstruction" value="$(arg metric_semantic_reconstruction)"/>
     <!-- Params for RosbagDataProvider -->
     <param name="rosbag_path"                 value="$(arg rosbag_path)"/>
     <param name="depth_cam_topic"             value="$(arg left_cam_depth_topic)"/>
     <param name="semantic_cam_topic"          value="$(arg left_cam_segmentation_topic)"/>
+    <param name="rgb_cam_topic"               value="$(arg left_cam_rgb_topic)"/>
     <param name="left_cam_info_topic"         value="$(arg left_cam_info_topic)"/>
     <!-- Params for KimeraSemantics -->
     <param name="tsdf_voxel_size"           value="$(arg voxel_size)" />
@@ -59,7 +68,8 @@
     <param name="semantic_color_mode"              value="semantic"/>
     <param name="semantic_measurement_probability" value="0.8" />
     <!-- The only dynamic label we have right now are humans, with label 20 -->
-    <rosparam param="dynamic_semantic_labels">[20]</rosparam>
+    <rosparam if="$(arg use_dynamic_masking)" param="dynamic_semantic_labels">[20]</rosparam>
+    <rosparam unless="$(arg use_dynamic_masking)" param="dynamic_semantic_labels">[]</rosparam>
 
     <!-- Is this needed? -->
     <param name="slice_level" value="1.0" />

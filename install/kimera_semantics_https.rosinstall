@@ -2,6 +2,9 @@
     local-name: catkin_simple
     uri: https://github.com/catkin/catkin_simple.git
 - git:
+    local-name: disparity_image_proc
+    uri: https://github.com/ToniRV/disparity_image_proc.git
+- git:
     local-name: eigen_catkin
     uri: https://github.com/ethz-asl/eigen_catkin.git
 - git:
@@ -20,20 +23,14 @@
     local-name: minkindr_ros
     uri: https://github.com/ethz-asl/minkindr_ros.git
 - git:
+    local-name: numpy_eigen
+    uri: https://github.com/ethz-asl/numpy_eigen.git
+- git:
     local-name: protobuf_catkin
     uri: https://github.com/ethz-asl/protobuf_catkin.git
 - git:
     local-name: catkin_boost_python_buildtool
     uri: https://github.com/ethz-asl/catkin_boost_python_buildtool.git
 - git:
-    local-name: schweizer_messer
-    uri: https://github.com/ethz-asl/schweizer_messer.git
-- git:
-    local-name: pointcloud_recolor
-    uri: https://github.com/ToniRV/ROS_pointcloud_recolor.git
-- git:
     local-name: voxblox
     uri: https://github.com/ethz-asl/voxblox.git
-- git:
-    local-name: Kimera-Semantics
-    uri: https://github.com/MIT-SPARK/Kimera-Semantics.git

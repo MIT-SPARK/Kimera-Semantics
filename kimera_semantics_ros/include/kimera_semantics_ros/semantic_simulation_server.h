@@ -1,7 +1,21 @@
 #pragma once
 
+#include <iostream>
+#include <vector>
+
+#include <glog/logging.h>
+
+#include <pcl/point_types.h>
+#include <pcl/point_cloud.h>
+
+#include <voxblox_ros/mesh_vis.h>
 #include <voxblox_ros/simulation_server.h>
 
+#include <voxblox_msgs/FilePath.h>
+#include <voxblox_msgs/FilePathRequest.h>
+#include <voxblox_msgs/FilePathResponse.h>
+
+#include "kimera_semantics/common.h"
 #include "kimera_semantics/color.h"
 #include "kimera_semantics/semantic_tsdf_integrator_factory.h"
 #include "kimera_semantics/semantic_voxel.h"
@@ -13,31 +27,16 @@ namespace kimera {
 class SemanticSimulationServer : public vxb::SimulationServer {
  public:
   SemanticSimulationServer(const ros::NodeHandle& nh,
-                           const ros::NodeHandle& nh_private)
-      : vxb::SimulationServer(nh, nh_private),
-        semantic_config_(
-            getSemanticTsdfIntegratorConfigFromRosParam(nh_private)) {
-    world_ = make_unique<SemanticSimulationWorld>();
+                           const ros::NodeHandle& nh_private);
 
-    semantic_gt_.reset(
-        new vxb::Layer<SemanticVoxel>(voxel_size_, voxels_per_side_));
+  // The below two functions are taken from the TSDF Server...
+  bool loadMapCallback(voxblox_msgs::FilePath::Request& request,
+                       voxblox_msgs::FilePath::Response&);
 
-    semantic_test_.reset(
-        new vxb::Layer<SemanticVoxel>(voxel_size_, voxels_per_side_));
+  bool loadTsdfMap(const std::string& file_path);
+  bool loadEsdfMap(const std::string& file_path);
 
-    tsdf_integrator_ =
-        SemanticTsdfIntegratorFactory::create(SemanticTsdfIntegratorType::kFast,
-                                              tsdf_integrator_->getConfig(),
-                                              semantic_config_,
-                                              tsdf_test_.get(),
-                                              semantic_test_.get());
-
-    // Ros ground-truth publisher.
-    semantic_gt_pub_ = nh_private_.advertise<pcl::PointCloud<pcl::PointXYZRGB>>(
-        "semantic_gt", 1, true);
-  }
-
- private:
+ protected:
   ros::Publisher semantic_gt_pub_;
   ros::Publisher semantic_gt_mesh_pub_;
   ros::Publisher semantic_tsdf_test_pub_;
@@ -50,9 +49,6 @@ class SemanticSimulationServer : public vxb::SimulationServer {
 
   // Generated maps:
   std::unique_ptr<vxb::Layer<SemanticVoxel>> semantic_test_;
-
-  // Integrators:
-  std::unique_ptr<vxb::TsdfIntegratorBase> semantic_tsdf_integrator_;
 };
 
 }  // namespace kimera

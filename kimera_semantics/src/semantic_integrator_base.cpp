@@ -119,6 +119,12 @@ void SemanticIntegratorBase::setSemanticProbabilities() {
           std::pow(kTotalNumberOfLabels, 2) * log_non_match_probability_ -
           kTotalNumberOfLabels * log_non_match_probability_,
       1000 * vxb::kFloatEpsilon);
+  // Set the likelihood row for unknown label to 0, so to avoid integrating
+  // our knowledge that the voxel is unknown.
+  // Log(0) is -inf.
+  // Well, now, rather, we give uniform weight, saying that we don't know what
+  // is what.
+  semantic_log_likelihood_.col(kUnknownSemanticLabelId).setZero();
 }
 
 // TODO(Toni): Complete this function!!
@@ -354,6 +360,9 @@ void SemanticIntegratorBase::calculateMaximumLikelihoodLabel(
   CHECK(!semantic_posterior.hasNaN())
       << "Eigen's maxCoeff has undefined behaviour with NaNs, fix your "
          "posteriors.";
+  // TODO(Toni): if the semantic_label is still unknown, then, if the
+  // kUnknownSemanticLabel is set to something != 0, the 0 class will be
+  // unfairly shown as the class for this voxel, while in reality we don't know.
   semantic_posterior.maxCoeff(semantic_label);
 }
 

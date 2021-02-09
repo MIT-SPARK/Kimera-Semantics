@@ -65,7 +65,7 @@ inline SemanticLabelToColorMap getRandomSemanticLabelToColorMap() {
     semantic_label_color_map_[i] = vxb::randomColor();
   }
   // Make first colours easily distinguishable.
-  CHECK_GE(semantic_label_color_map_.size(), 8);
+  CHECK_GE(semantic_label_color_map_.size(), 8u);
   CHECK_GE(semantic_label_color_map_.size(), kTotalNumberOfLabels);
   // TODO(Toni): Check it Matches with default value for SemanticVoxel!
   semantic_label_color_map_.at(0) = HashableColor::Gray();    // Label unknown
