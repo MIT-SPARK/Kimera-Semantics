@@ -125,8 +125,6 @@ void SemanticIntegratorBase::setSemanticProbabilities() {
   // Well, now, rather, we give uniform weight, saying that we don't know what
   // is what.
   semantic_log_likelihood_.col(kUnknownSemanticLabelId).setZero();
-
-  LOG(ERROR) << "SEMANTIC LOG LIKELIHOOD \n" << semantic_log_likelihood_;
 }
 
 // TODO(Toni): Complete this function!!
