@@ -98,7 +98,7 @@ Finally, compile:
 
 ```bash
 # Compile code
-catkin build kimera
+catkin build kimera_semantics_ros
 
 # Refresh workspace
 source ~/catkin_ws/devel/setup.bash
