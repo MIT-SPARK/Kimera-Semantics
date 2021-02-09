@@ -1,13 +1,16 @@
 Panels:
   - Class: rviz/Displays
-    Help Height: 0
+    Help Height: 247
     Name: Displays
     Property Tree Widget:
       Expanded:
         - /Global Options1
         - /MarkerArray2
+        - /PointCloud26
+        - /PointCloud27
+        - /TF1/Frames1
       Splitter Ratio: 0.24904942512512207
-    Tree Height: 1326
+    Tree Height: 584
   - Class: rviz/Selection
     Name: Selection
   - Class: rviz/Tool Properties
@@ -27,7 +30,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: PointCloud2
+    SyncSource: Image
 Preferences:
   PromptSaveOnExit: true
 Toolbars:
@@ -194,13 +197,13 @@ Visualization Manager:
       Use rainbow: true
       Value: false
     - Class: rviz/MarkerArray
-      Enabled: true
+      Enabled: false
       Marker Topic: /kimera_semantics_eval_node/tsdf_test_mesh
       Name: MarkerArray
       Namespaces:
-        mesh: true
+        {}
       Queue Size: 100
-      Value: true
+      Value: false
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
@@ -226,16 +229,139 @@ Visualization Manager:
       Size (Pixels): 3
       Size (m): 0.009999999776482582
       Style: Flat Squares
-      Topic: /kimera_semantics_eval_node/view_ptcloud_pub
+      Topic: /kimera_semantics_eval_node/semantic_tsdf_mesh
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
       Value: false
+    - Alpha: 1
+      Autocompute Intensity Bounds: true
+      Autocompute Value Bounds:
+        Max Value: 10
+        Min Value: -10
+        Value: true
+      Axis: Z
+      Channel Name: intensity
+      Class: rviz/PointCloud2
+      Color: 255; 255; 255
+      Color Transformer: Intensity
+      Decay Time: 0
+      Enabled: false
+      Invert Rainbow: false
+      Max Color: 255; 255; 255
+      Max Intensity: 4096
+      Min Color: 0; 0; 0
+      Min Intensity: 0
+      Name: PointCloud2
+      Position Transformer: XYZ
+      Queue Size: 10
+      Selectable: true
+      Size (Pixels): 3
+      Size (m): 1
+      Style: Spheres
+      Topic: /kimera_semantics_eval_node/semantic_instance_centroid_pub
+      Unreliable: false
+      Use Fixed Frame: true
+      Use rainbow: true
+      Value: false
+    - Class: voxblox_rviz_plugin/VoxbloxMesh
+      Enabled: true
+      Name: VoxbloxMesh
+      Topic: /kimera_semantics_node/mesh
+      Unreliable: false
+      Value: true
+    - Class: rviz/TF
+      Enabled: true
+      Frame Timeout: 15
+      Frames:
+        All Enabled: false
+        base_link_gt:
+          Value: false
+        left_cam:
+          Value: true
+        object_0:
+          Value: false
+        object_1:
+          Value: false
+        object_10:
+          Value: true
+        object_11:
+          Value: true
+        object_2:
+          Value: false
+        object_3:
+          Value: false
+        object_4:
+          Value: false
+        object_5:
+          Value: false
+        object_6:
+          Value: false
+        object_7:
+          Value: false
+        object_8:
+          Value: true
+        object_9:
+          Value: true
+        right_cam:
+          Value: false
+        world:
+          Value: false
+      Marker Scale: 1
+      Name: TF
+      Show Arrows: false
+      Show Axes: true
+      Show Names: false
+      Tree:
+        world:
+          base_link_gt:
+            left_cam:
+              {}
+            right_cam:
+              {}
+          object_0:
+            {}
+          object_1:
+            {}
+          object_10:
+            {}
+          object_11:
+            {}
+          object_2:
+            {}
+          object_3:
+            {}
+          object_4:
+            {}
+          object_5:
+            {}
+          object_6:
+            {}
+          object_7:
+            {}
+          object_8:
+            {}
+          object_9:
+            {}
+      Update Interval: 0
+      Value: true
+    - Class: rviz/Image
+      Enabled: true
+      Image Topic: /tesse/left_cam/image_raw
+      Max Value: 1
+      Median window: 5
+      Min Value: 0
+      Name: Image
+      Normalize Range: true
+      Queue Size: 2
+      Transport Hint: raw
+      Unreliable: false
+      Value: true
   Enabled: true
   Global Options:
-    Background Color: 243; 243; 243
+    Background Color: 255; 255; 255
     Default Light: true
-    Fixed Frame: map
+    Fixed Frame: world
     Frame Rate: 30
   Name: root
   Tools:
@@ -259,25 +385,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 25.682771682739258
+      Distance: 3.8008620738983154
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -0.18018460273742676
-        Y: 0.39574289321899414
-        Z: -9.145582225755788e-6
+        X: 21.944902420043945
+        Y: 44.69186782836914
+        Z: 6.213528536136437e-7
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.2647972106933594
+      Pitch: 0.5853986144065857
       Target Frame: base_link
       Value: ThirdPersonFollower (rviz)
-      Yaw: 2.257084608078003
+      Yaw: 5.797221660614014
     Saved:
       - Class: rviz/ThirdPersonFollower
         Distance: 5.126427173614502
@@ -305,7 +431,9 @@ Window Geometry:
   Height: 1545
   Hide Left Dock: false
   Hide Right Dock: true
-  QMainWindow State: 000000ff00000000fd0000000400000000000002100000056bfc020000000cfb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000003d0000056b000000c900fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000001a0050006c0061006e006e0069006e006700500061006e0065006c0000000199000001540000000000000000fb0000000c00430061006d0065007200610000000231000000bc0000000000000000fb0000000a0049006d006100670065000000043e000001680000000000000000fb0000000a0049006d00610067006501000004cb000000db0000000000000000000000010000010f00000569fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000003d00000569000000a400fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e100000197000000030000075f0000003efc0100000002fb0000000800540069006d006501000000000000075f000002eb00fffffffb0000000800540069006d00650100000000000004500000000000000000000005490000056b00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  Image:
+    collapsed: false
+  QMainWindow State: 000000ff00000000fd000000040000000000000210000005affc020000000efb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000003d0000037c000000c900fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000001a0050006c0061006e006e0069006e006700500061006e0065006c0000000199000001540000000000000000fb0000000c00430061006d0065007200610000000231000000bc0000000000000000fb0000000a0049006d006100670065000000043e000001680000000000000000fb0000000a0049006d00610067006501000004cb000000db0000000000000000fb0000000c00430061006d00650072006101000003d00000021c0000000000000000fb0000000a0049006d00610067006501000003bf0000022d0000001600ffffff000000010000010f000005affc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000003d000005af000000a400fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e1000001970000000300000ebd0000003efc0100000002fb0000000800540069006d0065000000000000000ebd000002eb00fffffffb0000000800540069006d0065010000000000000450000000000000000000000ca7000005af00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Selection:
     collapsed: false
   Time:
@@ -314,6 +442,6 @@ Window Geometry:
     collapsed: false
   Views:
     collapsed: true
-  Width: 1887
-  X: 1953
+  Width: 3773
+  X: 67
   Y: 27

@@ -16,17 +16,10 @@
   <!-- Let's go at twice real-time to show the speed! It can go faster, but then rviz struggles. -->
   <arg name="rosbag_rate" default="2.0"/>
   <arg name="bag_file" default="$(find kimera_semantics_ros)/rosbags/kimera_semantics_demo.bag"/>
-  <node name="player" pkg="rosbag" type="play" output="screen"
-    args="--clock --rate $(arg rosbag_rate) $(arg bag_file)"  if="$(arg play_bag)">
-    <!-- The rosbag we first generated did not follow ROS naming standards for image topics,
-         so we remap the topics accordingly here.-->
-    <remap from="/tesse/left_cam" to="/tesse/left_cam/image_raw"/>
-    <remap from="/tesse/segmentation" to="/tesse/segmentation/image_raw"/>
-    <remap from="/tesse/depth" to="/tesse/depth/image_raw"/>
-  </node>
 
   <!-- If you just want to run 3D reconstruction without semantics, set this flag to false-->
   <arg name="metric_semantic_reconstruction" default="true"/>
+  <arg name="semantic_label_2_color_csv_filepath" default="$(find kimera_semantics_ros)/cfg/tesse_multiscene_underground1_segmentation_mapping.csv"/>
 
   <!-- Input -->
   <arg name="semantic_pointcloud"         default="/semantic_pointcloud"/>
@@ -39,6 +32,16 @@
   <arg name="use_freespace_pointcloud"    default="false" />
   <arg name="freespace_pointcloud"        default="/dev/null"/>
 
+  <!-- Run rosbag if requested with play_bag arg -->
+  <node name="player" pkg="rosbag" type="play" output="screen"
+    args="--clock --rate $(arg rosbag_rate) $(arg bag_file)"  if="$(arg play_bag)">
+    <!-- The rosbag we first generated did not follow ROS naming standards for image topics,
+         so we remap the topics accordingly here.-->
+    <remap from="/tesse/left_cam"     to="$(arg left_cam_topic)"/>
+    <remap from="/tesse/segmentation" to="$(arg left_cam_segmentation_topic)"/>
+    <remap from="/tesse/depth"        to="$(arg left_cam_depth_topic)"/>
+  </node>
+
   <!-- Generate input pointcloud with semantic labels for kimera-semantics:
      - 1. Using the depth image and registered semantic image (run_stereo_dense=false).
      - 2. Using stereo depth reconstruction (run_stereo_dense=true). -->
@@ -48,7 +51,6 @@
     <!-- Launch Nodelet manager: used by depth_image_proc and disparity_image_proc -->
     <node pkg="nodelet" type="nodelet" name="nodelet_manager" args="manager"
       output="screen"/>
-
     <!-- Run stereo_dense_reconstruction_node (only if we don't use the depth image). -->
     <arg name="left_cam_stereo_depth_topic" value="/depth_image"/>
     <group if="$(arg run_stereo_dense)">
@@ -59,15 +61,14 @@
         <arg name="left_cam_topic"              value="$(arg left_cam_topic)"/>
         <arg name="right_cam_topic"             value="$(arg right_cam_topic)"/>
         <arg name="pointcloud"                  value="$(arg pointcloud)"/>
-        <arg name="disparity_image"             value="disparity"/>
+        <arg name="disparity_image"             value="/disparity"/>
         <arg name="depth_image"                 value="$(arg left_cam_stereo_depth_topic)"/>
         <arg name="convert_disparity_img_to_depth_img" value="true"/>
       </include>
     </group>
 
     <!-- Converts registered depth image and RGB image into an RGB pointcloud.
-         Using depth and semantic image, it generates semantic pointcloud. We only
-        run this if we are not using stereo depth reconstruction instead. -->
+         Using depth and semantic image, it generates semantic pointcloud. -->
     <node pkg="nodelet" type="nodelet" name="cloudify"
       args="load depth_image_proc/point_cloud_xyzrgb nodelet_manager
       -no-bond" output="screen">
@@ -95,7 +96,7 @@
 
     <!-- Params -->
     <param name="tsdf_voxel_size"           value="$(arg voxel_size)" />
-    <param name="tsdf_voxels_per_side"      value="16" />
+    <param name="tsdf_voxels_per_side"      value="32" />
     <param name="max_ray_length_m"          value="$(arg max_ray_length_m)" />
     <param name="min_time_between_msgs_sec" value="0.2" />
     <param name="voxel_carving_enabled"     value="true" />
@@ -124,10 +125,10 @@
     <param name="slice_level" value="1.0" />
 
     <param name="semantic_label_2_color_csv_filepath"
-    value="$(find kimera_semantics_ros)/cfg/tesse_multiscene_office1_segmentation_mapping.csv"/>
+      value="$(arg semantic_label_2_color_csv_filepath)"/>
 
     <param name="publish_pointclouds"     value="false"/>
-    <param name="update_mesh_every_n_sec" value="0.1" />
+    <param name="update_mesh_every_n_sec" value="1.0" />
     <param name="mesh_filename"           value="$(find kimera_semantics_ros)/mesh_results/$(anon tesse).ply" />
   </node>
 </launch>
