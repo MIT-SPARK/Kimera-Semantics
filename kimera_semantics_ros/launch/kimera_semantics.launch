@@ -19,7 +19,7 @@
 
   <!-- If you just want to run 3D reconstruction without semantics, set this flag to false-->
   <arg name="metric_semantic_reconstruction" default="true"/>
-  <arg name="semantic_label_2_color_csv_filepath" default="$(find kimera_semantics_ros)/cfg/tesse_multiscene_underground1_segmentation_mapping.csv"/>
+  <arg name="semantic_label_2_color_csv_filepath" default="$(find kimera_semantics_ros)/cfg/tesse_multiscene_office1_segmentation_mapping.csv"/>
 
   <!-- Input -->
   <arg name="semantic_pointcloud"         default="/semantic_pointcloud"/>
