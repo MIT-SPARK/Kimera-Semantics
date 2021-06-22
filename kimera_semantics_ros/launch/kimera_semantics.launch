@@ -100,7 +100,7 @@
     <param name="max_ray_length_m"          value="$(arg max_ray_length_m)" />
     <param name="min_time_between_msgs_sec" value="0.2" />
     <param name="voxel_carving_enabled"     value="true" />
-    <param name="color_mode"                value="lambert_color"/>
+    <param name="color_mode"                value="color"/>
     <param name="use_const_weight"          value="false" />
     <param name="use_freespace_pointcloud"  value="$(arg use_freespace_pointcloud)" />
     <remap from="freespace_pointcloud"      to="$(arg freespace_pointcloud)"/>
