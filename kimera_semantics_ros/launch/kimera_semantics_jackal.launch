@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="ISO-8859-15"?>
+<launch>
+  <arg name="robot_name"/>
+  <arg name="voxel_size"       default="0.1"/>
+  <arg name="max_ray_length_m" default="4.5"/>
+  <arg name="use_sim_time"     default="false"/>
+  <arg name="decompress_depth" default="false"/>
+  <arg name="decompress_color" default="false"/>
+  <arg name="metric_semantic_reconstruction"      default="false"/>
+
+  <arg name="left_cam_frame"   default="$(arg robot_name)/forward_infra1_optical_frame"/>
+  <arg name="right_cam_frame"  default="$(arg robot_name)/forward_infra2_optical_frame"/>
+  <arg name="sensor_frame"     default="$(arg left_cam_frame)"/>
+  <arg name="odom_frame"       default="$(arg robot_name)/odom"/>
+  
+  <arg name="left_cam_info_topic"                 default="/$(arg robot_name)/forward/color/camera_info" />
+  <arg name="right_cam_info_topic"                default="/$(arg robot_name)/forward/infra2/camera_info"/>
+  <arg name="left_cam_topic"                      default="/$(arg robot_name)/forward/color/image_raw"/>
+  <arg name="right_cam_topic"                     default="/$(arg robot_name)/forward/infra2/image_rect_raw"/>
+  <arg name="depth_cam_topic"                     default="/$(arg robot_name)/forward/depth/image_rect_raw"/>
+  <arg name="seg_cam_topic"                       default="/dev/null"/>
+
+  <group ns="$(arg robot_name)" >
+    <!-- Launch Kimera-Semantics -->
+    <include file="$(find kimera_semantics_ros)/launch/kimera_semantics.launch" pass_all_args="true">
+      <arg name="semantic_pointcloud"                 value="semantic_pointcloud"/>
+      <arg name="world_frame"                         value="$(arg odom_frame)"/>
+      <arg name="run_stereo_dense"                    value="false"/>
+      <arg name="should_use_sim_time"                 value="$(arg use_sim_time)"/>
+      <arg name="publish_point_clouds"                value="true"/>
+      <arg name="use_freespace_pointcloud"            value="false"/>
+      <arg name="left_cam_segmentation_topic"         value="$(arg seg_cam_topic)"/>
+      <arg name="left_cam_depth_topic"                value="$(arg depth_cam_topic)"/>
+    </include>
+
+    <node if="$(arg decompress_depth)" pkg="image_transport" type="republish" name="depth_img_decompress" 
+      args="compressed in:=$(arg depth_cam_topic) raw out:=$(arg depth_cam_topic)"/>
+    <node if="$(arg decompress_color)" pkg="image_transport" type="republish" name="color_img_decompress" 
+      args="compressed in:=$(arg left_cam_topic) raw out:=$(arg left_cam_topic)"/>
+  </group>
+</launch>
