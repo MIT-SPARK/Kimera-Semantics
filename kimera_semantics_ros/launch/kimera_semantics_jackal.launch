@@ -2,7 +2,7 @@
 <launch>
   <arg name="robot_name"/>
   <arg name="voxel_size"       default="0.1"/>
-  <arg name="max_ray_length_m" default="4.5"/>
+  <arg name="max_ray_length_m" default="2.5"/>
   <arg name="use_sim_time"     default="false"/>
   <arg name="decompress_depth" default="false"/>
   <arg name="decompress_color" default="false"/>
