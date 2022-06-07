@@ -5,6 +5,7 @@
   <arg name="decompress_depth" default="false"/>
   <arg name="decompress_color" default="false"/>
   <arg name="metric_semantic_reconstruction"      default="false"/>
+  <arg name="run_semantic_recolor"                default="$(arg metric_semantic_reconstruction)"/>
 
   <arg name="left_cam_frame"   default="$(arg robot_name)/forward_infra1_optical_frame"/>
   <arg name="right_cam_frame"  default="$(arg robot_name)/forward_infra2_optical_frame"/>
@@ -18,12 +19,12 @@
   <arg name="depth_cam_topic"                     default="/$(arg robot_name)/forward/depth/image_rect_raw"/>
   <arg name="seg_cam_topic"                       default="/$(arg robot_name)/forward/semantic/image_raw"/>
 
-  <include if="$(arg metric_semantic_reconstruction)" file="$(find semantic_recolor)/launch/semantic_recolor.launch">
+  <include if="$(arg run_semantic_recolor)" file="$(find semantic_recolor)/launch/semantic_recolor.launch">
     <arg name="rgb_topic" value="$(arg left_cam_topic)"/>
     <arg name="semantic_topic" value="$(arg seg_cam_topic)"/>
   </include>
 
-  <arg name="semantic_label_2_color_csv_filepath" default="$(find semantic_recolor)/config/colors/ade150_expanded_config.csv"/>
+  <arg name="semantic_label_2_color_csv_filepath" default="$(find kimera_semantics_ros)/cfg/ade150_expanded_config.csv"/>
 
   <group ns="$(arg robot_name)" >
     <!-- Launch Kimera-Semantics -->
