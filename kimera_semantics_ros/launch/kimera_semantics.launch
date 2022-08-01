@@ -49,7 +49,7 @@
   <arg name="run_stereo_dense"     default="false"/>
   <group if="$(arg publish_point_clouds)">
     <!-- Launch Nodelet manager: used by depth_image_proc and disparity_image_proc -->
-    <node pkg="nodelet" type="nodelet" name="nodelet_manager" args="manager"
+    <node pkg="nodelet" type="nodelet" name="nodelet_manager_ks" args="manager"
       output="screen"/>
     <!-- Run stereo_dense_reconstruction_node (only if we don't use the depth image). -->
     <arg name="left_cam_stereo_depth_topic" value="/depth_image"/>
@@ -70,7 +70,7 @@
     <!-- Converts registered depth image and RGB image into an RGB pointcloud.
          Using depth and semantic image, it generates semantic pointcloud. -->
     <node pkg="nodelet" type="nodelet" name="cloudify"
-      args="load depth_image_proc/point_cloud_xyzrgb nodelet_manager
+      args="load depth_image_proc/point_cloud_xyzrgb nodelet_manager_ks
       -no-bond" output="screen">
       <!-- Input -->
       <remap from="rgb/camera_info"             to="$(arg left_cam_info_topic)"/>
