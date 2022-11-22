@@ -20,7 +20,7 @@
   <arg name="depth_cam_topic"                     default="/$(arg robot_name)/forward/depth/image_rect_raw"/>
   <arg name="seg_cam_topic"                       default="/$(arg robot_name)/forward/semantic/image_raw"/>
 
-  <arg name="semantic_label_2_color_csv_filepath" default="$(find semantic_recolor)/config/colors/ade150_expanded_config.csv"/>
+  <arg name="semantic_label_2_color_csv_filepath" default="$(find kimera_semantics_ros)/cfg/ade150_expanded_config.csv"/>
 
   <group ns="$(arg robot_name)" >
     <!-- Launch Semantic Segmentation -->
