@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="ISO-8859-15"?>
 <launch>
   <arg name="robot_name"/>
-  <arg name="voxel_size"       default="0.10"/>
+  <arg name="voxel_size"       default="0.20"/>
   <arg name="use_sim_time"     default="false"/>
   <arg name="decompress_depth" default="false"/>
   <arg name="decompress_color" default="false"/>
