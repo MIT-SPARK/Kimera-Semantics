@@ -8,7 +8,7 @@ SemanticSimulationServer::SemanticSimulationServer(
     : vxb::SimulationServer(nh, nh_private),
       semantic_config_(
           getSemanticTsdfIntegratorConfigFromRosParam(nh_private)) {
-  world_ = make_unique<SemanticSimulationWorld>();
+  world_ = std::make_unique<SemanticSimulationWorld>();
 
   semantic_gt_.reset(
       new vxb::Layer<SemanticVoxel>(voxel_size_, voxels_per_side_));

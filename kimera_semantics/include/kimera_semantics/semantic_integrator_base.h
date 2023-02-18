@@ -60,10 +60,10 @@ enum class ColorMode : int {
 class SemanticIntegratorBase {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  typedef std::shared_ptr<SemanticIntegratorBase> Ptr;
-  typedef vxb::
-      ApproxHashArray<12, std::mutex, vxb::GlobalIndex, vxb::LongIndexHash>
-          Mutexes;
+  using Ptr = std::shared_ptr<SemanticIntegratorBase>;
+  using Mutexes = vxb::
+      ApproxHashArray<12, std::mutex, vxb::GlobalIndex, vxb::LongIndexHash>;
+  using LabelFrequencyMap = std::map<SemanticLabel, size_t>;
 
   struct SemanticConfig {
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -111,7 +111,7 @@ class SemanticIntegratorBase {
    * @param semantic_voxel
    */
   void updateSemanticVoxel(const vxb::GlobalIndex& global_voxel_idx,
-                           const SemanticProbabilities& measurement_frequencies,
+                           const LabelFrequencyMap& frequencies,
                            Mutexes* mutexes,
                            vxb::TsdfVoxel* tsdf_voxel,
                            SemanticVoxel* semantic_voxel);
@@ -150,7 +150,7 @@ class SemanticIntegratorBase {
    **/
   // TODO(Toni): Unit Test this function!
   void updateSemanticVoxelProbabilities(
-      const SemanticProbabilities& measurement_frequencies,
+      const LabelFrequencyMap& measurement_frequencies,
       SemanticProbabilities* semantic_prior_probability) const;
 
   // THREAD SAFE
@@ -203,8 +203,12 @@ class SemanticIntegratorBase {
   mutable std::mutex temp_semantic_block_mutex_;
   vxb::Layer<SemanticVoxel>::BlockHashMap temp_semantic_block_map_;
 
+  //! Number of semantic labels
+  const size_t num_labels;
+
   // Log probabilities of matching measurement and prior label,
   // and non-matching.
+  SemanticProbability log_init_probablility;
   SemanticProbability log_match_probability_;
   SemanticProbability log_non_match_probability_;
   // A `#Labels X #Labels` Eigen matrix where each `j` column represents the
