@@ -1,7 +1,7 @@
 #include <ros/ros.h>
 
-#include <glog/logging.h>
 #include <gflags/gflags.h>
+#include <glog/logging.h>
 
 #include "kimera_semantics/common.h"
 #include "kimera_semantics_ros/semantic_simulation_server.h"
@@ -15,16 +15,16 @@ class SemanticSimulationServerImpl : public SemanticSimulationServer {
 
   void prepareWorld() {
     CHECK(world_);
-    world_->addObject(make_unique<vxb::Sphere>(
+    world_->addObject(std::make_unique<vxb::Sphere>(
         vxb::Point(0.0, 0.0, 2.0), 2.0, vxb::Color::Red()));
 
-    world_->addObject(make_unique<vxb::PlaneObject>(
+    world_->addObject(std::make_unique<vxb::PlaneObject>(
         vxb::Point(-2.0, -4.0, 2.0), vxb::Point(0, 1, 0), vxb::Color::White()));
 
-    world_->addObject(make_unique<vxb::PlaneObject>(
+    world_->addObject(std::make_unique<vxb::PlaneObject>(
         vxb::Point(4.0, 0.0, 0.0), vxb::Point(-1, 0, 0), vxb::Color::Pink()));
 
-    world_->addObject(make_unique<vxb::Cube>(
+    world_->addObject(std::make_unique<vxb::Cube>(
         vxb::Point(-4.0, 4.0, 2.0), vxb::Point(4, 4, 4), vxb::Color::Green()));
 
     world_->addGroundLevel(0.03);

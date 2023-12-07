@@ -27,12 +27,12 @@ int main(int argc, char** argv) {
   ros::NodeHandle nh;
   ros::NodeHandle nh_private("~");
 
-  ros::Publisher depth_img_pub = nh.advertise<sensor_msgs::Image>(
-        "depth_img", 10, true);
-  ros::Publisher semantic_img_pub = nh.advertise<sensor_msgs::Image>(
-        "semantic_img", 10, true);
-  ros::Publisher rgb_img_pub = nh.advertise<sensor_msgs::Image>(
-        "rgb_img", 10, true);
+  ros::Publisher depth_img_pub =
+      nh.advertise<sensor_msgs::Image>("depth_img", 10, true);
+  ros::Publisher semantic_img_pub =
+      nh.advertise<sensor_msgs::Image>("semantic_img", 10, true);
+  ros::Publisher rgb_img_pub =
+      nh.advertise<sensor_msgs::Image>("rgb_img", 10, true);
 
   std::string depth_cam_frame_id_;
   std::string base_link_frame_id_;
@@ -49,10 +49,9 @@ int main(int argc, char** argv) {
   CHECK(nh_private.getParam("metric_semantic_reconstruction",
                             metric_semantic_reconstruction));
   if (metric_semantic_reconstruction) {
-    tsdf_server =
-        kimera::make_unique<kimera::SemanticTsdfServer>(nh, nh_private);
+    tsdf_server = std::make_unique<kimera::SemanticTsdfServer>(nh, nh_private);
   } else {
-    tsdf_server = kimera::make_unique<voxblox::TsdfServer>(nh, nh_private);
+    tsdf_server = std::make_unique<voxblox::TsdfServer>(nh, nh_private);
   }
 
   kimera::RosbagDataProvider rosbag;
@@ -155,10 +154,9 @@ int main(int argc, char** argv) {
   voxblox::EsdfServer esdf_server(nh, nh_private);
   esdf_server.loadMap(tsdf_esdf_filename);
   esdf_server.disableIncrementalUpdate();
-  if (kGenerateEsdf ||
-      esdf_server.getEsdfMapPtr()
-              ->getEsdfLayerPtr()
-              ->getNumberOfAllocatedBlocks() == 0) {
+  if (kGenerateEsdf || esdf_server.getEsdfMapPtr()
+                               ->getEsdfLayerPtr()
+                               ->getNumberOfAllocatedBlocks() == 0) {
     static constexpr bool kFullEuclideanDistance = true;
     esdf_server.updateEsdfBatch(kFullEuclideanDistance);
   }

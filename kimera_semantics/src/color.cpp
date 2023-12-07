@@ -74,10 +74,9 @@ SemanticLabel SemanticLabel2Color::getSemanticLabelFromColor(
   } else {
     LOG(ERROR) << "Caught an unknown color: \n"
                << "RGBA: " << std::to_string(color.r) << ' '
-               <<  std::to_string(color.g) << ' '
-               <<  std::to_string(color.b) << ' '
-               <<  std::to_string(color.a);
-    return kUnknownSemanticLabelId; // Assign unknown label for now...
+               << std::to_string(color.g) << ' ' << std::to_string(color.b)
+               << ' ' << std::to_string(color.a);
+    return kUnknownSemanticLabelId;  // Assign unknown label for now...
   }
 }
 
@@ -89,8 +88,40 @@ HashableColor SemanticLabel2Color::getColorFromSemanticLabel(
   } else {
     LOG(ERROR) << "Caught an unknown semantic label: \n"
                << "Label: " << std::to_string(semantic_label);
-    return HashableColor(); // Assign unknown color for now...
+    return HashableColor();  // Assign unknown color for now...
   }
+}
+
+size_t SemanticLabel2Color::getNumLabels() const {
+  // note that we want to avoid overflow when max_label == 255 (we return
+  // max_label + 1), so this is a size_t instead of a uint8_t
+  size_t max_label = 0;
+  for (const auto id_color_pair : semantic_label_to_color_map_) {
+    if (id_color_pair.first > max_label) {
+      max_label = id_color_pair.first;
+    }
+  }
+  return max_label + 1;
+}
+
+SemanticLabelToColorMap getRandomSemanticLabelToColorMap(size_t num_labels) {
+  SemanticLabelToColorMap cmap;
+
+  for (size_t i = 0; i < num_labels; i++) {
+    cmap[i] = vxb::randomColor();
+  }
+
+  // Make first colours easily distinguishable.
+  CHECK_GE(cmap.size(), 8u);
+  cmap.at(0) = HashableColor::Gray();    // Label unknown
+  cmap.at(1) = HashableColor::Green();   // Label Ceiling
+  cmap.at(2) = HashableColor::Blue();    // Label Chair
+  cmap.at(3) = HashableColor::Purple();  // Label Floor
+  cmap.at(4) = HashableColor::Pink();    // Label Objects/Furniture/Chair
+  cmap.at(5) = HashableColor::Teal();    // Label Sofa
+  cmap.at(6) = HashableColor::Orange();  // Label Table
+  cmap.at(7) = HashableColor::Yellow();  // Label Wall/Window/TV/board/Picture
+  return cmap;
 }
 
 }  // namespace kimera

@@ -4,15 +4,15 @@
  * @author Antoni Rosinol
  */
 
-#include "kimera_semantics/common.h"
 #include "kimera_semantics_ros/rosbag_data_provider.h"
+#include "kimera_semantics/common.h"
 
 #include <glog/logging.h>
 
 #include <ros/duration.h>
 
-#include <tf/transform_listener.h>
 #include <tf/transform_datatypes.h>
+#include <tf/transform_listener.h>
 #include <tf_conversions/tf_eigen.h>
 
 #include <rosgraph_msgs/Clock.h>
@@ -69,8 +69,7 @@ RosbagDataProvider::RosbagDataProvider()
       nh_.advertise<sensor_msgs::Image>(depth_imgs_topic_, kQueueSize);
   semantic_img_pub_ =
       nh_.advertise<sensor_msgs::Image>(semantic_imgs_topic_, kQueueSize);
-  rgb_img_pub_ =
-      nh_.advertise<sensor_msgs::Image>(rgb_imgs_topic_, kQueueSize);
+  rgb_img_pub_ = nh_.advertise<sensor_msgs::Image>(rgb_imgs_topic_, kQueueSize);
 }
 
 void RosbagDataProvider::initialize() {
@@ -82,7 +81,6 @@ void RosbagDataProvider::initialize() {
 
 bool RosbagDataProvider::parseRosbag(const std::string& bag_path) {
   LOG(INFO) << "Parsing rosbag data.";
-
 
   // Fill in rosbag to data_
   rosbag::Bag bag;
@@ -101,7 +99,7 @@ bool RosbagDataProvider::parseRosbag(const std::string& bag_path) {
   rosbag::View view(bag, rosbag::TopicQuery(topics));
 
   ros::Duration rosbag_duration = view.getEndTime() - view.getBeginTime();
-  rosbag_data_ = kimera::make_unique<RosbagData>(rosbag_duration);
+  rosbag_data_ = std::make_unique<RosbagData>(rosbag_duration);
 
   // For some datasets, we have duplicated measurements for the same time.
   static constexpr bool kEarlyStopForDebug = false;
@@ -128,8 +126,7 @@ bool RosbagDataProvider::parseRosbag(const std::string& bag_path) {
       if (kEarlyStopForDebug &&
           rosbag_data_->depth_imgs_.size() ==
               rosbag_data_->semantic_imgs_.size() &&
-          rosbag_data_->depth_imgs_.size() ==
-              rosbag_data_->rgb_imgs_.size() &&
+          rosbag_data_->depth_imgs_.size() == rosbag_data_->rgb_imgs_.size() &&
           rosbag_data_->depth_imgs_.size() >= 300u) {
         LOG(ERROR) << "Early break.";
         break;
@@ -182,8 +179,9 @@ bool RosbagDataProvider::parseRosbag(const std::string& bag_path) {
       << "No semantic images  parsed from rosbag.";
   LOG_IF(FATAL, rosbag_data_->rgb_imgs_.size() == 0)
       << "No rgb images  parsed from rosbag.";
-  LOG_IF(FATAL,
-         rosbag_data_->depth_imgs_.size() != rosbag_data_->semantic_imgs_.size())
+  LOG_IF(
+      FATAL,
+      rosbag_data_->depth_imgs_.size() != rosbag_data_->semantic_imgs_.size())
       << "Unequal number of depth and semantic images.";
   LOG_IF(FATAL,
          rosbag_data_->depth_imgs_.size() != rosbag_data_->rgb_imgs_.size())

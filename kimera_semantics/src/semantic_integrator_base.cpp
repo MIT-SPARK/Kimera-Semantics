@@ -59,17 +59,7 @@ SemanticIntegratorBase::SemanticIntegratorBase(
     vxb::Layer<SemanticVoxel>* semantic_layer)
     : semantic_config_(semantic_config),
       semantic_layer_(nullptr),
-      temp_semantic_block_mutex_(),
-      temp_semantic_block_map_(),
-      log_match_probability_(),
-      log_non_match_probability_(),
-      semantic_log_likelihood_(),
-      semantic_voxel_size_(),
-      semantic_voxels_per_side_(),
-      semantic_block_size_(),
-      semantic_voxel_size_inv_(),
-      semantic_voxels_per_side_inv_(),
-      semantic_block_size_inv_() {
+      num_labels(semantic_config.semantic_label_to_color_->getNumLabels()) {
   setSemanticLayer(semantic_layer);
   CHECK_NOTNULL(semantic_layer_);
   setSemanticProbabilities();
@@ -95,30 +85,27 @@ void SemanticIntegratorBase::setSemanticProbabilities() {
       semantic_config_.semantic_measurement_probability_;
   SemanticProbability non_match_probability =
       1.0f - semantic_config_.semantic_measurement_probability_;
+
   CHECK_GT(match_probability, 0.0);
   CHECK_GT(non_match_probability, 0.0);
   CHECK_LT(match_probability, 1.0);
   CHECK_LT(non_match_probability, 1.0);
-  log_match_probability_ = std::log(match_probability);
-  log_non_match_probability_ = std::log(non_match_probability);
-  CHECK_GT(log_match_probability_, log_non_match_probability_)
+  CHECK_GT(match_probability, non_match_probability)
       << "Your probabilities do not make sense... The likelihood of a "
          "label, knowing that we have measured that label, should not be"
          "smaller than the likelihood of seeing another label!";
-  semantic_log_likelihood_ =
-      semantic_log_likelihood_.Constant(log_non_match_probability_);
+
+  log_match_probability_ = std::log(match_probability);
+  log_non_match_probability_ = std::log(non_match_probability);
+  log_init_probablility =
+      std::log(1.0 / static_cast<SemanticProbability>(num_labels));
+
+  semantic_log_likelihood_ = semantic_log_likelihood_.Constant(
+      num_labels, num_labels, log_non_match_probability_);
   semantic_log_likelihood_.diagonal() =
-      semantic_log_likelihood_.diagonal().Constant(log_match_probability_);
-  // TODO(Toni): sanity checks, set as DCHECK_EQ.
-  CHECK_NEAR(semantic_log_likelihood_.diagonal().sum(),
-             kTotalNumberOfLabels * log_match_probability_,
-             100 * vxb::kFloatEpsilon);
-  CHECK_NEAR(
-      semantic_log_likelihood_.sum(),
-      kTotalNumberOfLabels * log_match_probability_ +
-          std::pow(kTotalNumberOfLabels, 2) * log_non_match_probability_ -
-          kTotalNumberOfLabels * log_non_match_probability_,
-      1000 * vxb::kFloatEpsilon);
+      semantic_log_likelihood_.diagonal().Constant(num_labels,
+                                                   log_match_probability_);
+
   // Set the likelihood row for unknown label to 0, so to avoid integrating
   // our knowledge that the voxel is unknown.
   // Log(0) is -inf.
@@ -135,7 +122,7 @@ SemanticProbability SemanticIntegratorBase::computeMeasurementProbability(
 
 void SemanticIntegratorBase::updateSemanticVoxel(
     const vxb::GlobalIndex& global_voxel_idx,
-    const SemanticProbabilities& measurement_frequencies,
+    const std::map<SemanticLabel, size_t>& measurement_frequencies,
     Mutexes* mutexes,
     vxb::TsdfVoxel* tsdf_voxel,
     SemanticVoxel* semantic_voxel) {
@@ -156,7 +143,15 @@ void SemanticIntegratorBase::updateSemanticVoxel(
   //  if (std::abs(sdf) < config_.default_truncation_distance) {
   // Do the same for semantic updates:
   // Don't do it bcs of copyrights... :'(
+
   ////// Here is the actual logic of Kimera-Semantics:   /////////////////////
+  // Intialize new voxels to uniform probability
+  if (semantic_voxel->empty) {
+    semantic_voxel->semantic_priors =
+        SemanticProbabilities::Constant(num_labels, 1, log_init_probablility);
+    semantic_voxel->empty = false;
+  }
+
   // Calculate new probabilities given the measurement frequencies.
   updateSemanticVoxelProbabilities(measurement_frequencies,
                                    &semantic_voxel->semantic_priors);
@@ -281,36 +276,36 @@ void SemanticIntegratorBase::updateSemanticLayerWithStoredBlocks() {
  **/
 // TODO(Toni): Unit Test this function!
 void SemanticIntegratorBase::updateSemanticVoxelProbabilities(
-    const SemanticProbabilities& measurement_frequencies,
-    SemanticProbabilities* semantic_prior_probability) const {
-  DCHECK(semantic_prior_probability != nullptr);
-  DCHECK_EQ(semantic_prior_probability->size(), kTotalNumberOfLabels);
-  DCHECK_LE((*semantic_prior_probability)[0], 0.0);
-  DCHECK(std::isfinite((*semantic_prior_probability)[0]));
-  DCHECK(!semantic_prior_probability->hasNaN());
-  DCHECK_EQ(measurement_frequencies.size(), kTotalNumberOfLabels);
-  DCHECK_GE(measurement_frequencies.sum(), 1.0)
+    const LabelFrequencyMap& obs,
+    SemanticProbabilities* prior) const {
+  DCHECK(prior != nullptr);
+  DCHECK_GT(prior->size(), 0);
+  DCHECK_LE((*prior)[0], 0.0);
+  DCHECK(std::isfinite((*prior)[0]));
+  DCHECK(!prior->hasNaN());
+  DCHECK(!obs.empty())
       << "We should at least have one measurement when calling this "
          "function.";
 
   // Check prior is normalized!
   // static constexpr bool kDebug = true;
   // if (kDebug) {
-  //  CHECK_NEAR(semantic_prior_probability->sum(), 1.0, vxb::kFloatEpsilon);
+  //  CHECK_NEAR(prior->sum(), 1.0, vxb::kFloatEpsilon);
   //}
 
   // A. Pre-multiply each column of
   // likelihood matrix with corresponding measurement frequency.
   // B. Compute posterior probabilities:
   // Post_i = (likelihood * meas freqs)_i + prior_i;
-  *semantic_prior_probability +=
-      semantic_log_likelihood_ * measurement_frequencies;
-  DCHECK(!semantic_prior_probability->hasNaN());
+  for (auto&& [label, count] : obs) {
+    *prior += count * semantic_log_likelihood_.col(label);
+  }
+  DCHECK(!prior->hasNaN());
 
   // Normalize posterior probability.
   // TODO(Toni): no need to normalize all the time unless someone asks
   // for meaningful probabilities?
-  // normalizeProbabilities(semantic_prior_probability);
+  // normalizeProbabilities(prior);
 }
 
 // THREAD SAFE
@@ -331,13 +326,10 @@ void SemanticIntegratorBase::normalizeProbabilities(
   if (normalization_factor != 0.0) {
     unnormalized_probs->normalize();
   } else {
-    CHECK_EQ(unnormalized_probs->size(), kTotalNumberOfLabels);
-    static const SemanticProbability kUniformLogProbability =
-        std::log(1 / kTotalNumberOfLabels);
     LOG(WARNING) << "Normalization Factor is " << normalization_factor
                  << ", all values are 0. Normalizing to log(1/n) = "
-                 << kUniformLogProbability;
-    unnormalized_probs->setConstant(kUniformLogProbability);
+                 << log_init_probablility;
+    unnormalized_probs->setConstant(log_init_probablility);
   }
 
   // TODO(Toni): REMOVE

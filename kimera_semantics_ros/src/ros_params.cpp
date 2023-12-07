@@ -17,14 +17,13 @@
 
 namespace kimera {
 
-std::string
-getSemanticTsdfIntegratorTypeFromRosParam(const ros::NodeHandle& nh_private) {
+std::string getSemanticTsdfIntegratorTypeFromRosParam(
+    const ros::NodeHandle& nh_private) {
   // Get semantic tsdf integrator type, by default using "fast"
   // (could be "merged").
   std::string semantic_tsdf_integrator_type = "fast";
-  nh_private.param("method",
-                   semantic_tsdf_integrator_type,
-                   semantic_tsdf_integrator_type);
+  nh_private.param(
+      "method", semantic_tsdf_integrator_type, semantic_tsdf_integrator_type);
   return semantic_tsdf_integrator_type;
 }
 
@@ -63,7 +62,7 @@ getSemanticTsdfIntegratorConfigFromRosParam(const ros::NodeHandle& nh_private) {
 
   // Get semantic map
   semantic_config.semantic_label_to_color_ =
-      kimera::make_unique<SemanticLabel2Color>(
+      std::make_unique<SemanticLabel2Color>(
           getSemanticLabelToColorCsvFilepathFromRosParam(nh_private));
 
   std::vector<int> dynamic_labels;

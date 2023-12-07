@@ -249,10 +249,7 @@ void MergedSemanticTsdfIntegrator::integrateVoxel(
   HashableColor merged_color;
   vxb::Point merged_point_C = vxb::Point::Zero();
   vxb::FloatingPoint merged_weight = 0.0f;
-  // Calculate semantic labels frequencies to encode likelihood function.
-  // Prefill with 0 frequency.
-  SemanticProbabilities semantic_label_frequencies =
-      SemanticProbabilities::Zero();
+  std::map<SemanticLabel, size_t> label_frequencies;
 
   // Loop over all point indices inside current voxel.
   // Generate merged values to propagate to other voxels:
@@ -274,9 +271,12 @@ void MergedSemanticTsdfIntegrator::integrateVoxel(
         merged_color, merged_weight, color, point_weight);
     merged_weight += point_weight;
 
-    const SemanticLabel& semantic_label = semantic_labels[pt_idx];
-    CHECK_LT(semantic_label, semantic_label_frequencies.size());
-    semantic_label_frequencies[semantic_label] += 1.0f;
+    const SemanticLabel& label = semantic_labels[pt_idx];
+    auto iter = label_frequencies.find(label);
+    if (iter == label_frequencies.end()) {
+      iter = label_frequencies.emplace(label, 0).first;
+    }
+    iter->second += 1;
 
     // only take first point when clearing
     if (clearing_ray) {
@@ -321,7 +321,7 @@ void MergedSemanticTsdfIntegrator::integrateVoxel(
     SemanticVoxel* semantic_voxel =
         allocateStorageAndGetSemanticVoxelPtr(global_voxel_idx, &semantic_block, &semantic_block_idx);
     updateSemanticVoxel(global_voxel_idx,
-                        semantic_label_frequencies,
+                        label_frequencies,
                         &mutexes_,
                         voxel,
                         semantic_voxel);
