@@ -6,6 +6,7 @@
 
   <!-- We use VIO's estimated base_link: `left_cam_base_link` -->
   <arg name="sensor_frame" default="cam0"/>
+  <arg name="world_frame"  default="world"/>
 
   <!-- If you want to play directly from a rosbag -->
   <arg name="play_bag" default="false"/>
